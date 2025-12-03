@@ -1,0 +1,34 @@
+/* ============================================
+   STUDENT SPECIFIC STYLES
+   ============================================ */
+
+/* Student indicator styling */
+.indicator.student {
+    background: linear-gradient(135deg, #4ade80 0%, #22d3ee 100%);
+}
+
+/* Student specific form styling */
+body.student #studentName {
+    background-color: var(--clr-info-light);
+    cursor: not-allowed;
+}
+
+/* Student feedback cards */
+body.student .feedback-card {
+    border-left: 4px solid var(--clr-success);
+}
+
+/* Hide admin actions for students */
+body.student .feedback-actions {
+    display: none;
+}
+
+/* Student welcome message */
+body.student #welcomeMsg {
+    color: var(--clr-success);
+}
+
+/* Student stats emphasis */
+body.student .stat-number {
+    color: var(--clr-success);
+}
