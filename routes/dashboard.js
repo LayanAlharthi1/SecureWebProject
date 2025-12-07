@@ -602,4 +602,102 @@ const Dashboard = (function() {
         filterFeedbacks: filterFeedbacks,
         renderFeedbacks: renderFeedbacks
     };
+<<<<<<< HEAD
 })();
+=======
+})();
+
+
+//1
+app.post("/api/feedback", (req, res) => {
+  const { student_name, course, rating, message, difficulty } = req.body;
+  db.run(
+    `INSERT INTO feedback (student_name, course, rating, message, difficulty)
+     VALUES (?, ?, ?, ?, ?)`,
+    [student_name, course, rating, message, difficulty],
+    function (err) {
+      if (err) return res.status(500).send("Error saving feedback");
+      res.send("Feedback saved successfully!");
+    }
+  );
+});
+
+app.get("/api/feedback", (req, res) => {
+  db.all("SELECT * FROM feedback", [], (err, rows) => {
+    if (err) return res.status(500).send("Error retrieving feedback");
+    res.json(rows);
+  });
+});
+
+
+//2
+fetch("/api/feedback", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify(newFeedback)
+})
+.then(res => res.text())
+.then(msg => {
+  showNotification(msg, "success");
+  loadFeedbacks(); // reload from server
+})
+.catch(err => handleError(err, "Failed to submit feedback"));
+
+
+//3
+function loadFeedbacks() {
+  fetch("/api/feedback")
+    .then(res => res.json())
+    .then(data => {
+      feedbacks = data;
+      filterFeedbacks();
+      updateDashboardStats();
+    })
+    .catch(err => handleError(err, "Failed to load feedback"));
+}
+//----------------------------------------
+
+// إرسال feedback جديد للسيرفر
+function addFeedback(event) {
+  event.preventDefault();
+
+  const studentName = document.getElementById('studentName').value.trim();
+  const course = document.getElementById('course').value;
+  const rating = document.getElementById('rating').value;
+  const message = document.getElementById('message').value.trim();
+  const difficulty = document.getElementById('difficulty').value;
+
+  fetch("/api/feedback", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ student_name: studentName, course, rating, message, difficulty })
+  })
+  .then(res => res.text())
+  .then(msg => {
+    showNotification(msg, "success");
+    loadFeedbacks(); // إعادة تحميل البيانات من السيرفر
+  })
+  .catch(err => handleError(err, "Failed to submit feedback"));
+}
+
+// جلب كل feedback من السيرفر
+function loadFeedbacks() {
+  fetch("/api/feedback")
+    .then(res => res.json())
+    .then(data => {
+      feedbacks = data;
+      filterFeedbacks();
+      updateDashboardStats();
+    })
+    .catch(err => handleError(err, "Failed to load feedback"));
+}
+
+// استدعاء عند تشغيل التطبيق
+function initializeApp() {
+  if (!checkSession()) return;
+  initializeTheme();
+  initializeNotifications();
+  loadFeedbacks(); // تحميل البيانات من السيرفر عند فتح الـ Dashboard
+  // باقي الإعدادات مثل event listeners...
+}
+>>>>>>> 2f268f0 (add layals full project with database)
