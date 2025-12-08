@@ -3,11 +3,9 @@
 <head>
     <meta charset="UTF-8" />
     <title>Log In - Secure Online Feedback</title>
-<<<<<<< HEAD
-    <link rel="stylesheet" href="style.css" />
-=======
+
+    <!-- use the CSS served from /css -->
     <link rel="stylesheet" href="/css/style.css" />
->>>>>>> 2f268f0 (add layals full project with database)
 </head>
 <body>
 
@@ -16,7 +14,7 @@
         <nav>
             <ul class="nav">
                 <li><a href="home.html">Home</a></li>
-                 <li><a href="team.html">Students</a></li>
+                <li><a href="team.html">Students</a></li>
                 <li><a href="courses.html">Courses</a></li>
             </ul>
         </nav>
@@ -24,7 +22,9 @@
 
     <section class="auth-section">
         <h1>Log In to Your Account</h1>
-        <form id="login-form" method="POST">
+
+        <!-- IMPORTANT: send POST to /login -->
+        <form id="login-form" action="/login" method="POST">
             <label for="username">Username</label>
             <input type="text" id="username" name="username" required />
 
@@ -33,10 +33,10 @@
 
             <button type="submit" class="btn secondary">Log In</button>
         </form>
+
         <p>Don't have an account? <a href="register.html">Register</a></p>
     </section>
 
-     <script src="script.js"></script>
-
+    <script src="script.js"></script>
 </body>
 </html>
