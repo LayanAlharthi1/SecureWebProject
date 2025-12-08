@@ -32,13 +32,13 @@ app.use((req, res, next) => {
 
 // ---- Routes (all of these MUST export an Express router) ----
 const loginRouter = require("./routes/login");
-const dashboardRouter = require("./routes/dashboard");
-const logoutRouter = require("./routes/logout");
+//const dashboardRouter = require("./routes/dashboard");
+//const logoutRouter = require("./routes/logout");
 const registerRouter = require("./routes/register");
 
 app.use(loginRouter);
-app.use(dashboardRouter);
-app.use(logoutRouter);
+//app.use(dashboardRouter);
+//app.use(logoutRouter);
 app.use(registerRouter);
 
 // ---- Default routes ----

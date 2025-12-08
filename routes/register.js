@@ -2,66 +2,61 @@ const express = require("express");
 const path = require("path");
 const crypto = require("crypto");
 const router = express.Router();
+const db = require("../db");
 
-// دالة هاش للباسورد – نفس الفكرة في login
+// Hash password
 function hashPassword(password) {
     return crypto.createHash("sha256").update(password).digest("hex");
 }
 
-// (اختياري) GET /register  عشان لو أحد فتح الرابط مباشرة
+// GET /register
 router.get("/register", (req, res) => {
     res.sendFile(path.join(__dirname, "..", "public", "register.html"));
 });
 
-// POST /register  – استلام بيانات الفورم
-router.post("/register", async (req, res, next) => {
-    try {
-        const { username, email, password } = req.body;
+// POST /register
+router.post("/register", (req, res) => {
+    const { username, email, password } = req.body;
 
-        // 1) التحقق من المدخلات
-        if (!username || !email || !password) {
-            return res.status(400).send("All fields are required.");
-        }
-
-        // 2) التحقق من قوة الباسورد (نفس الشروط اللي في الفرونت)
-        const passwordPattern =
-            /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
-
-        if (!passwordPattern.test(password)) {
-            return res
-                .status(400)
-                .send(
-                    "Password must be at least 8 characters and include uppercase, lowercase, number, and special character."
-                );
-        }
-
-        // 3) عمل هاش للباسورد
-        const passwordHash = hashPassword(password);
-        console.log("🔐 [REGISTER] username:", username, "hash:", passwordHash);
-
-        // ================================
-        // ⬇⬇⬇  جزء الداتابيس ) ⬇⬇⬇
-        //
-        // هنا يضيف:
-        // - التأكد إن اليوزرنيم/الإيميل مو مكرر
-        // - حفظ المستخدم في الداتابيس:
-        //   { username, email, passwordHash, role: 'student' }
-        //
-        // مثال مستقبلاً:
-        // await db.createUser({ username, email, passwordHash, role: "student" });
-        // return res.redirect("/login");
-        //
-        // ================================
-
-        // حالياً: نوضح إن ما فيه داتابيس
-        return res
-            .status(503)
-            .send("Registration is not available yet (database not connected).");
-
-    } catch (err) {
-        console.error("💥 [REGISTER ERROR]:", err);
-        next(err); // يروح للـ error handler في server.js
+    // Validate inputs
+    if (!username || !email || !password) {
+        return res.status(400).send("All fields are required.");
     }
+
+    const passwordPattern = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
+    if (!passwordPattern.test(password)) {
+        return res.status(400).send("Password does not meet the requirements.");
+    }
+
+    const passwordHash = hashPassword(password);
+
+    // 1. Check if username OR email already exists
+    db.get(
+        "SELECT * FROM users WHERE username = ? OR email = ?",
+        [username, email],
+        (err, user) => {
+            if (err) return res.status(500).send("Database error");
+
+            if (user) {
+                return res.status(400).send("Username or email already exists.");
+            }
+
+            // 2. Insert new user
+            db.run(
+                "INSERT INTO users (username, email, password) VALUES (?, ?, ?)",
+                [username, email, passwordHash],
+                function (err) {
+                    if (err) {
+                        return res.status(500).send("Error saving user.");
+                    }
+                    console.log("User registered:", username);
+
+                    // Redirect to login page after success
+                    return res.redirect("/login");
+                }
+            );
+        }
+    );
 });
 
 module.exports = router;
