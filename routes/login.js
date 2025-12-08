@@ -1,20 +1,13 @@
 const express = require("express");
 const router = express.Router();
 const session = require("../session");
-const sqlite3 = require("sqlite3").verbose();
-const path = require("path");
+const crypto = require("crypto");
+const db = require("../db");             // use the shared SQLite connection
 
-// Connect to the same SQLite database file as server.js
-const db = new sqlite3.Database(
-  path.join(__dirname, "..", "securewebproject.db"),
-  (err) => {
-    if (err) {
-      console.error("💥 [LOGIN] Failed to connect to DB:", err.message);
-    } else {
-      console.log("✅ [LOGIN] Connected to SQLite database.");
-    }
-  }
-);
+// same hashing as in register.js
+function hashPassword(password) {
+  return crypto.createHash("sha256").update(password).digest("hex");
+}
 
 // POST /login – handle login form
 router.post("/login", (req, res, next) => {
@@ -28,7 +21,7 @@ router.post("/login", (req, res, next) => {
 
     // 2) Look up user in DB
     db.get(
-      "SELECT id, password FROM users WHERE username = ?",
+      "SELECT id, username, password FROM users WHERE username = ?",
       [username],
       (err, user) => {
         if (err) {
@@ -41,10 +34,10 @@ router.post("/login", (req, res, next) => {
           return res.status(401).send("Invalid username or password");
         }
 
-        // 3) Compare passwords
-        // NOTE: right now passwords are stored plain in DB.
-        // Later, when you add hashing, replace this with a hash comparison.
-        if (user.password !== password) {
+        // 3) Compare hashed passwords
+        const passwordHash = hashPassword(password);
+
+        if (user.password !== passwordHash) {
           return res.status(401).send("Invalid username or password");
         }
 
@@ -56,8 +49,11 @@ router.post("/login", (req, res, next) => {
           `sessionId=${sessionId}; HttpOnly; SameSite=Strict`
         );
 
-        // 5) Redirect to dashboard after successful login
-        return res.redirect("/dashboard");
+        console.log("✅ [LOGIN] user", user.username, "logged in");
+
+        // 5) Redirect to dashboard (adjust if your path is different)
+        return res.redirect("/dashboard.html");
+        // or: return res.redirect("/dashboard");
       }
     );
   } catch (err) {
@@ -67,5 +63,3 @@ router.post("/login", (req, res, next) => {
 });
 
 module.exports = router;
-
-

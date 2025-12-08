@@ -1,62 +1,82 @@
 const express = require("express");
 const path = require("path");
 const crypto = require("crypto");
+const db = require("../db");          // <-- shared SQLite connection
 const router = express.Router();
-const db = require("../db");
 
-// Hash password
+// hash password with sha256 (same as before)
 function hashPassword(password) {
-    return crypto.createHash("sha256").update(password).digest("hex");
+  return crypto.createHash("sha256").update(password).digest("hex");
 }
 
-// GET /register
+// GET /register (open the HTML page)
 router.get("/register", (req, res) => {
-    res.sendFile(path.join(__dirname, "..", "public", "register.html"));
+  res.sendFile(path.join(__dirname, "..", "public", "register.html"));
 });
 
-// POST /register
-router.post("/register", (req, res) => {
+// POST /register (form submit)
+router.post("/register", (req, res, next) => {
+  try {
     const { username, email, password } = req.body;
 
-    // Validate inputs
+    // 1) validate inputs
     if (!username || !email || !password) {
-        return res.status(400).send("All fields are required.");
+      return res.status(400).send("All fields are required.");
     }
 
-    const passwordPattern = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
+    const passwordPattern =
+      /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
+
     if (!passwordPattern.test(password)) {
-        return res.status(400).send("Password does not meet the requirements.");
+      return res
+        .status(400)
+        .send(
+          "Password must be at least 8 characters and include uppercase, lowercase, number, and special character."
+        );
     }
 
     const passwordHash = hashPassword(password);
 
-    // 1. Check if username OR email already exists
+    // 2) check if username or email already exist
     db.get(
-        "SELECT * FROM users WHERE username = ? OR email = ?",
-        [username, email],
-        (err, user) => {
-            if (err) return res.status(500).send("Database error");
+      "SELECT id FROM users WHERE username = ? OR email = ?",
+      [username, email],
+      (err, existing) => {
+        if (err) {
+          console.error("[REGISTER] DB error (check unique):", err);
+          return next(err);
+        }
 
-            if (user) {
-                return res.status(400).send("Username or email already exists.");
+        if (existing) {
+          return res
+            .status(400)
+            .send("Username or email is already registered.");
+        }
+
+        // 3) insert new user
+        db.run(
+          "INSERT INTO users (username, email, password) VALUES (?,?,?)",
+          [username, email, passwordHash],
+          function (err2) {
+            if (err2) {
+              console.error("[REGISTER] DB error (insert):", err2);
+              return next(err2);
             }
 
-            // 2. Insert new user
-            db.run(
-                "INSERT INTO users (username, email, password) VALUES (?, ?, ?)",
-                [username, email, passwordHash],
-                function (err) {
-                    if (err) {
-                        return res.status(500).send("Error saving user.");
-                    }
-                    console.log("User registered:", username);
-
-                    // Redirect to login page after success
-                    return res.redirect("/login");
-                }
+            console.log(
+              "✅ [REGISTER] New user inserted with id",
+              this.lastID
             );
-        }
+            // after successful registration go to login page
+            return res.redirect("/login.html");
+          }
+        );
+      }
     );
+  } catch (err) {
+    console.error("💥 [REGISTER ERROR]:", err);
+    next(err);
+  }
 });
 
 module.exports = router;
