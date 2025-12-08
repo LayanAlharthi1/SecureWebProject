@@ -52,7 +52,7 @@ router.post("/login", (req, res, next) => {
         console.log("✅ [LOGIN] user", user.username, "logged in");
 
         // 5) Redirect to dashboard (adjust if your path is different)
-        return res.redirect("/dashboard.html");
+        return res.redirect("/index.html");
         // or: return res.redirect("/dashboard");
       }
     );
