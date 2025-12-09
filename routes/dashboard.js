@@ -3,19 +3,6 @@
 // Shared functionality between Admin and Student
 // ============================================
 
-
-// For testing //
-if (!sessionStorage.getItem('role')) {
-    sessionStorage.setItem('role', 'student');  
-    sessionStorage.setItem('userName', 'Student');  
-    sessionStorage.setItem('studentName', 'Student');  
-}
-if (!sessionStorage.getItem('role')) {
-    sessionStorage.setItem('role', 'admin');  
-    sessionStorage.setItem('userName', 'Admin');  
-    sessionStorage.setItem('studentName', 'Admin');  
-}
-
 const Dashboard = (function() {
     // ========== PRIVATE VARIABLES ==========
     let feedbacks = [];
