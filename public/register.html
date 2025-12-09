@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Register - Secure Online Feedback</title>
+
+    <!-- Use the CSS from the /css folder -->
+    <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+
+    <header class="main-header">
+        <div class="logo">cyber security course feedback</div>
+        <nav>
+            <ul class="nav">
+                <li><a href="home.html">Home</a></li>
+                <li><a href="team.html">Students</a></li>
+                <li><a href="courses.html">Courses</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <section class="auth-section">
+        <h1>Create Your Account</h1>
+
+        <!-- IMPORTANT: action="/register" so it hits the backend route -->
+        <form id="register-form" action="/register" method="POST">
+            <label for="username">Username</label>
+            <input type="text" id="username" name="username" required />
+
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" required />
+
+            <label for="password">Password</label>
+            <input
+                type="password"
+                id="password"
+                name="password"
+                required
+                minlength="8"
+                maxlength="20"
+                pattern="^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$"
+                title="Password must be at least 8 characters,
+                include one uppercase letter,
+                one lowercase letter,
+                one number,
+                and one special character."
+            />
+
+            <button type="submit" class="btn primary">Register</button>
+        </form>
+
+        <p>Already have an account? <a href="login.html">Log In</a></p>
+    </section>
+
+    <script src="script.js"></script>
+</body>
+</html>
