@@ -1,4 +1,7 @@
+// =======================
 // server.js
+// =======================
+
 const express = require("express");
 const path = require("path");
 const sqlite3 = require("sqlite3").verbose();
@@ -32,14 +35,14 @@ async function requireLogin(req, res, next) {
     const match = cookieHeader.match(/sessionId=([^;]+)/);
 
     if (!match) {
-      return res.redirect("/login");
+      return res.sendFile(path.join(__dirname, "views", "not-allowed.html"));
     }
 
     const sessionId = match[1];
-
     const sessionRow = await getSession(sessionId);
+
     if (!sessionRow) {
-      return res.redirect("/login");
+      return res.sendFile(path.join(__dirname, "views", "not-allowed.html"));
     }
 
     req.userId = sessionRow.user_id;
@@ -53,7 +56,7 @@ async function requireLogin(req, res, next) {
 function requireRole(expectedRole) {
   return (req, res, next) => {
     if (!req.userId) {
-      return res.redirect("/login");
+      return res.sendFile(path.join(__dirname, "views", "not-allowed.html"));
     }
 
     const sql = "SELECT role FROM users WHERE id = ?";
@@ -61,7 +64,7 @@ function requireRole(expectedRole) {
       if (err) return next(err);
 
       if (!row || row.role !== expectedRole) {
-        return res.status(403).send("Access denied.");
+        return res.sendFile(path.join(__dirname, "views", "not-allowed.html"));
       }
 
       next();
@@ -71,26 +74,27 @@ function requireRole(expectedRole) {
 
 // ---------- Page routes ----------
 
-// login كبداية
+// البداية → Home page
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "login.html"));
+  res.sendFile(path.join(__dirname, "public", "home.html"));
 });
 
+// Login & Register
 app.get("/login", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "login.html"));
 });
 
-// register متاحة للجميع
 app.get("/register", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "register.html"));
 });
 
-// home مفتوحة للجميع
+// Home page route
 app.get("/home.html", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "home.html"));
 });
 
-// ⬅⬅⬅ مهم: نربط admin-dashboard.html بسيشن + رول
+// ------------------ Protected pages ------------------
+
 app.get(
   "/admin-dashboard.html",
   requireLogin,
@@ -100,7 +104,6 @@ app.get(
   }
 );
 
-// ⬅⬅⬅ ونفس الشي للطالب
 app.get(
   "/student-dashboard.html",
   requireLogin,
@@ -110,10 +113,11 @@ app.get(
   }
 );
 
-// ---------- Static files ----------
-app.use(express.static(path.join(__dirname, "public")));
-app.use("/css", express.static(path.join(__dirname, "css")));
-app.use("/img", express.static(path.join(__dirname, "img")));
+// ---------- Static files (ONLY css/js/img) ----------
+
+app.use("/css", express.static(path.join(__dirname, "public/css")));
+app.use("/js", express.static(path.join(__dirname, "public/js")));
+app.use("/img", express.static(path.join(__dirname, "public/img")));
 
 // ---------- Error handler ----------
 app.use((err, req, res, next) => {
@@ -129,9 +133,3 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
-
-
-//const dashboardRouter = require("./routes/dashboard");
-//const logoutRouter = require("./routes/logout");
-//app.use(dashboardRouter);
-//app.use(logoutRouter);
