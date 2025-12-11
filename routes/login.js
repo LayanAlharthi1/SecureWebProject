@@ -1,46 +1,34 @@
+// routes/login.js
 const express = require("express");
 const router = express.Router();
-<<<<<<< HEAD
-const session = require("../session");
-const crypto = require("crypto");
-const db = require("../db");             // use the shared SQLite connection
 
-// same hashing as in register.js
-=======
-const { createSession } = require("../session");
+const session = require("../session");      // نفس اللي كنتِ تستخدمينه
 const crypto = require("crypto");
-const db = require("../db");
+const db = require("../db");               // الاتصال بقاعدة البيانات
 
->>>>>>> 6569457e08bf992d1c6cb81f98e4d1152c20dba4
+// نفس الهاش المستخدم في register.js
 function hashPassword(password) {
   return crypto.createHash("sha256").update(password).digest("hex");
 }
 
-<<<<<<< HEAD
 // POST /login – handle login form
-=======
->>>>>>> 6569457e08bf992d1c6cb81f98e4d1152c20dba4
 router.post("/login", (req, res, next) => {
   try {
     const { username, password } = req.body;
 
-<<<<<<< HEAD
     // 1) Basic validation
-=======
->>>>>>> 6569457e08bf992d1c6cb81f98e4d1152c20dba4
     if (!username || !password) {
       return res.status(400).send("Username and password are required.");
     }
 
-<<<<<<< HEAD
-    // 2) Look up user in DB
+    // 2) Look up user in DB (نجيب الـ role بعد ما أضفتوه في الجدول)
     db.get(
-      "SELECT id, username, password FROM users WHERE username = ?",
+      "SELECT id, username, password, role FROM users WHERE username = ?",
       [username],
       (err, user) => {
         if (err) {
           console.error("💥 [LOGIN DB ERROR]:", err);
-          return next(err); // goes to global error handler in server.js
+          return next(err); // يروح للهاندلر العام في server.js
         }
 
         if (!user) {
@@ -55,55 +43,30 @@ router.post("/login", (req, res, next) => {
           return res.status(401).send("Invalid username or password");
         }
 
-        // 4) Create session
+        // 4) Create session (باستخدام ملف session حقكم)
         const sessionId = session.createSession(user.id);
 
-        res.setHeader(
-          "Set-Cookie",
-          `sessionId=${sessionId}; HttpOnly; SameSite=Strict`
-        );
-
-        console.log("✅ [LOGIN] user", user.username, "logged in");
-
-        // 5) Redirect to dashboard (adjust if your path is different)
-        return res.redirect("/index.html");
-        // or: return res.redirect("/dashboard");
-      }
-    );
-  } catch (err) {
-    console.error("💥 [LOGIN ERROR]:", err);
-=======
-    db.get(
-      "SELECT id, username, password, role FROM users WHERE username = ?",
-      [username],
-      async (err, user) => {
-
-        if (err) return next(err);
-        if (!user) return res.status(401).send("Invalid username or password");
-
-        const passwordHash = hashPassword(password);
-
-        if (user.password !== passwordHash)
-          return res.status(401).send("Invalid username or password");
-
-        const sessionId = await createSession(user.id);
-
+        // 5) Send cookie
         res.setHeader(
           "Set-Cookie",
           `sessionId=${sessionId}; HttpOnly; SameSite=Strict; Path=/`
         );
 
-        console.log("User logged:", user.username);
+        console.log("✅ [LOGIN] user", user.username, "logged in with role:", user.role);
 
+        // 6) Redirect based on role
         if (user.role === "admin") {
-          return res.redirect("/admin.html");
+          // صفحة الأدمن
+          return res.redirect("/admin-dashboard.html");
         } else {
-          return res.redirect("/dashboard.html");
+          // صفحة الطالب
+          return res.redirect("/student-dashboard.html");
+          
         }
       }
     );
   } catch (err) {
->>>>>>> 6569457e08bf992d1c6cb81f98e4d1152c20dba4
+    console.error("💥 [LOGIN ERROR]:", err);
     next(err);
   }
 });
