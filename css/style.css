@@ -55,11 +55,7 @@ body {
     justify-content: flex-start;
     align-items: center;
     height: 100vh;
-<<<<<<< HEAD
-    background: url('background.png') no-repeat center center fixed;
-=======
     background: url('/img/background.png') no-repeat center center fixed;
->>>>>>> 2f268f0 (add layals full project with database)
     background-size: cover;
     position: relative;
     padding-left: 10%;
