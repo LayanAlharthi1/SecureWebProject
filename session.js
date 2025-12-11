@@ -1,45 +1,79 @@
-// 4 time out -  نتحقق منه3 -  2 نحفظه - session id 1
+// session.js
+// إدارة الـ Sessions باستخدام SQLite بدلاً من التخزين في الذاكرة
 
 const crypto = require("crypto");
+const db = require("./db");
 
-const sessions = new Map();
+// مدة الجلسة (مثلاً 20 دقيقة)
+const SESSION_TIMEOUT = 20 * 60 * 1000; // 20 minutes
 
-//مدة الجلسة
-const SESSION_TIMEOUT = 20 * 60 * 1000;
+// توليد sessionId عشوائي وآمن
+function generateSessionId() {
+  return crypto.randomBytes(32).toString("hex");
+}
 
-module.exports = {
+// إنشاء جلسة جديدة عند تسجيل الدخول
+function createSession(userId) {
+  return new Promise((resolve, reject) => {
+    const sessionId = generateSessionId();
+    const now = Date.now();
 
-    // إنشاء جلسة جديدة عند تسجيل الدخول 1 
-    createSession(userId) {
-        const sessionId = crypto.randomBytes(16).toString("hex");
+    const sql = `
+      INSERT INTO sessions (session_id, user_id, last_activity)
+      VALUES (?, ?, ?)
+    `;
 
-        sessions.set(sessionId, {
-            userId,
-            lastActivity: Date.now()
-        });
+    db.run(sql, [sessionId, userId, now], function (err) {
+      if (err) return reject(err);
+      resolve(sessionId);
+    });
+  });
+}
 
-        return sessionId;
-    },
+// التحقق من الجلسة + تمديد مدتها لو ما انتهت
+function getSession(sessionId) {
+  return new Promise((resolve, reject) => {
+    db.get(
+      `SELECT * FROM sessions WHERE session_id = ?`,
+      [sessionId],
+      (err, row) => {
+        if (err) return reject(err);
+        if (!row) return resolve(null);
 
-    // التحقق من الجلسة 3 
-    getSession(sessionId) {
-        if (!sessions.has(sessionId)) return null;
-
-        const session = sessions.get(sessionId);
-
-        // انتهاء الجلسة 4 
-        if (Date.now() - session.lastActivity > SESSION_TIMEOUT) {
-            sessions.delete(sessionId);
-            return null;
+        // هل الجلسة منتهية؟
+        if (Date.now() - row.last_activity > SESSION_TIMEOUT) {
+          db.run(
+            `DELETE FROM sessions WHERE session_id = ?`,
+            [sessionId]
+          );
+          return resolve(null);
         }
 
-        // تحديث آخر نشاط
-        session.lastActivity = Date.now();
-        return session;
-    },
+        // تحديث آخر نشاط (session still alive)
+        db.run(
+          `UPDATE sessions SET last_activity = ? WHERE session_id = ?`,
+          [Date.now(), sessionId]
+        );
 
-    // حذف الجلسة (تسجيل خروج)
-    deleteSession(sessionId) {
-        sessions.delete(sessionId);
-    }
+        resolve(row);
+      }
+    );
+  });
+}
+
+// حذف الجلسة (تسجيل خروج)
+function deleteSession(sessionId) {
+  return new Promise((resolve, reject) => {
+    db.run(
+      `DELETE FROM sessions WHERE session_id = ?`,
+      [sessionId],
+      (err) => (err ? reject(err) : resolve())
+    );
+  });
+}
+
+module.exports = {
+  createSession,
+  getSession,
+  deleteSession,
 };
