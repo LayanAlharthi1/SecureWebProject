@@ -1,4 +1,5 @@
-// server.js
+// server.js --------------------------------------------------
+
 const express = require("express");
 const path = require("path");
 const sqlite3 = require("sqlite3").verbose();
@@ -18,49 +19,42 @@ app.use((req, res, next) => {
   next();
 });
 
-// ---------- Routers ----------
+// ---------- Routers (مهمّة جداً لـ POST /login و POST /register) ----------
 const loginRouter = require("./routes/login");
 const registerRouter = require("./routes/register");
 
-app.use(loginRouter);
-app.use(registerRouter);
+app.use(loginRouter);     // يعرّف POST /login
+app.use(registerRouter);  // يعرّف POST /register
 
-// ---------- Session Middlewares ----------
+// ---------- Session middlewares ----------
 async function requireLogin(req, res, next) {
   try {
-    const cookieHeader = req.headers.cookie || "";
-    const match = cookieHeader.match(/sessionId=([^;]+)/);
+    const cookie = req.headers.cookie || "";
+    const match = cookie.match(/sessionId=([^;]+)/);
 
-    if (!match) {
-      return res.redirect("/not-allowed.html");
-    }
+    if (!match) return res.redirect("/not-allowed.html");
 
     const sessionId = match[1];
-    const sessionRow = await getSession(sessionId);
+    const session = await getSession(sessionId);
 
-    if (!sessionRow) {
-      return res.redirect("/not-allowed.html");
-    }
+    if (!session) return res.redirect("/not-allowed.html");
 
-    req.userId = sessionRow.user_id;
-    req.sessionId = sessionId;
+    req.userId = session.user_id;
     next();
   } catch (err) {
     next(err);
   }
 }
 
-function requireRole(expectedRole) {
+function requireRole(role) {
   return (req, res, next) => {
-    if (!req.userId) {
-      return res.redirect("/not-allowed.html");
-    }
+    if (!req.userId) return res.redirect("/not-allowed.html");
 
     const sql = "SELECT role FROM users WHERE id = ?";
     req.db.get(sql, [req.userId], (err, row) => {
       if (err) return next(err);
 
-      if (!row || row.role !== expectedRole) {
+      if (!row || row.role !== role) {
         return res.redirect("/not-allowed.html");
       }
 
@@ -69,34 +63,24 @@ function requireRole(expectedRole) {
   };
 }
 
-// ---------- Page Routes ----------
-
-// Home page (public)
+// ---------- Page routes ----------
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "home.html"));
 });
 
-// Login (public)
-app.get("/login", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "login.html"));
-});
-
-// Register (public)
-app.get("/register", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "register.html"));
-});
-
-// Student Dashboard (protected)
-app.get(
-  "/student-dashboard.html",
-  requireLogin,
-  requireRole("student"),
-  (req, res) => {
-    res.sendFile(path.join(__dirname, "public", "student-dashboard.html"));
-  }
+app.get("/login", (req, res) =>
+  res.sendFile(path.join(__dirname, "public", "login.html"))
 );
 
-// Admin Dashboard (protected)
+app.get("/register", (req, res) =>
+  res.sendFile(path.join(__dirname, "public", "register.html"))
+);
+
+app.get("/home.html", (req, res) =>
+  res.sendFile(path.join(__dirname, "public", "home.html"))
+);
+
+// ---------- Protected pages ----------
 app.get(
   "/admin-dashboard.html",
   requireLogin,
@@ -106,19 +90,26 @@ app.get(
   }
 );
 
-// ---------- Static Assets (Secure) ----------
-// نخلي الـ HTML محمي، لكن الـ CSS / JS / IMG مسموح
-app.use("/css", express.static(path.join(__dirname, "public/css")));
-app.use("/js", express.static(path.join(__dirname, "public/js")));
-app.use("/img", express.static(path.join(__dirname, "public/img")));
+app.get(
+  "/student-dashboard.html",
+  requireLogin,
+  requireRole("student"),
+  (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "student-dashboard.html"));
+  }
+);
+
+// ---------- Static files ----------
+app.use(express.static(path.join(__dirname, "public")));
+app.use("/css", express.static(path.join(__dirname, "css")));
+app.use("/img", express.static(path.join(__dirname, "img")));
+app.use("/js", express.static(path.join(__dirname, "js")));
 
 // ---------- Error handler ----------
 app.use((err, req, res, next) => {
   console.error("💥 [SERVER ERROR]:", err);
   if (!res.headersSent) {
-    res
-      .status(500)
-      .send("An internal server error occurred. Please try again later.");
+    res.status(500).send("Internal server error");
   }
 });
 
