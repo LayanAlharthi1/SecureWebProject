@@ -1,7 +1,4 @@
-// =======================
 // server.js
-// =======================
-
 const express = require("express");
 const path = require("path");
 const sqlite3 = require("sqlite3").verbose();
@@ -28,21 +25,21 @@ const registerRouter = require("./routes/register");
 app.use(loginRouter);
 app.use(registerRouter);
 
-// ---------- Session middlewares ----------
+// ---------- Session Middlewares ----------
 async function requireLogin(req, res, next) {
   try {
     const cookieHeader = req.headers.cookie || "";
     const match = cookieHeader.match(/sessionId=([^;]+)/);
 
     if (!match) {
-      return res.sendFile(path.join(__dirname, "views", "not-allowed.html"));
+      return res.redirect("/not-allowed.html");
     }
 
     const sessionId = match[1];
     const sessionRow = await getSession(sessionId);
 
     if (!sessionRow) {
-      return res.sendFile(path.join(__dirname, "views", "not-allowed.html"));
+      return res.redirect("/not-allowed.html");
     }
 
     req.userId = sessionRow.user_id;
@@ -56,7 +53,7 @@ async function requireLogin(req, res, next) {
 function requireRole(expectedRole) {
   return (req, res, next) => {
     if (!req.userId) {
-      return res.sendFile(path.join(__dirname, "views", "not-allowed.html"));
+      return res.redirect("/not-allowed.html");
     }
 
     const sql = "SELECT role FROM users WHERE id = ?";
@@ -64,7 +61,7 @@ function requireRole(expectedRole) {
       if (err) return next(err);
 
       if (!row || row.role !== expectedRole) {
-        return res.sendFile(path.join(__dirname, "views", "not-allowed.html"));
+        return res.redirect("/not-allowed.html");
       }
 
       next();
@@ -72,38 +69,24 @@ function requireRole(expectedRole) {
   };
 }
 
-// ---------- Page routes ----------
+// ---------- Page Routes ----------
 
-// البداية → Home page
+// Home page (public)
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "home.html"));
 });
 
-// Login & Register
+// Login (public)
 app.get("/login", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "login.html"));
 });
 
+// Register (public)
 app.get("/register", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "register.html"));
 });
 
-// Home page route
-app.get("/home.html", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "home.html"));
-});
-
-// ------------------ Protected pages ------------------
-
-app.get(
-  "/admin-dashboard.html",
-  requireLogin,
-  requireRole("admin"),
-  (req, res) => {
-    res.sendFile(path.join(__dirname, "public", "admin-dashboard.html"));
-  }
-);
-
+// Student Dashboard (protected)
 app.get(
   "/student-dashboard.html",
   requireLogin,
@@ -113,8 +96,18 @@ app.get(
   }
 );
 
-// ---------- Static files (ONLY css/js/img) ----------
+// Admin Dashboard (protected)
+app.get(
+  "/admin-dashboard.html",
+  requireLogin,
+  requireRole("admin"),
+  (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "admin-dashboard.html"));
+  }
+);
 
+// ---------- Static Assets (Secure) ----------
+// نخلي الـ HTML محمي، لكن الـ CSS / JS / IMG مسموح
 app.use("/css", express.static(path.join(__dirname, "public/css")));
 app.use("/js", express.static(path.join(__dirname, "public/js")));
 app.use("/img", express.static(path.join(__dirname, "public/img")));
