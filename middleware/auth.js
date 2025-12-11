@@ -1,6 +1,7 @@
 // middleware/auth.js
 
 const { getSession } = require("../session");
+const db = require("../db");
 
 // دالة بسيطة لتفكيك الكوكيز من الهيدر
 function parseCookies(cookieHeader) {
@@ -15,15 +16,14 @@ function parseCookies(cookieHeader) {
   return list;
 }
 
-module.exports = async function (req, res, next) {
-  // نقرأ الكوكيز من الهيدر
+// هذا هو الميدل وير الأساسي (نفس اللي عندك بس مضاف عليه جلب اليوزر)
+async function authMiddleware(req, res, next) {
   const cookies = parseCookies(req.headers.cookie);
   const sessionId = cookies.sessionId;
 
   // ما فيه sessionId → رجّعه لصفحة تسجيل الدخول
   if (!sessionId) {
     return res.redirect("/login.html");
-    // أو لو تحبين: return res.redirect("/login");
   }
 
   try {
@@ -33,18 +33,52 @@ module.exports = async function (req, res, next) {
     // الجلسة غير موجودة أو منتهية
     if (!session) {
       return res.redirect("/login.html?expired=1");
-      // أو: return res.redirect("/login?expired=1");
     }
 
-    // نخزّن معلومات الجلسة في الطلب عشان نقدر نستخدمها في الراوتس
-    req.session = session;        // الشكل الجديد
-    req.userSession = session;    // عشان لو في كود قديم يستخدم الاسم القديم
+    // نخزّن السشن في الطلب (زي ما كنتِ مسوية)
+    req.session = session;
+    req.userSession = session;
     req.sessionId = sessionId;
 
-    next();
+    // 👈 جديد: نجيب بيانات المستخدم + الـ role
+    db.get(
+      "SELECT id, username, role FROM users WHERE id = ?",
+      [session.user_id],
+      (err, user) => {
+        if (err) {
+          console.error("💥 [AUTH MIDDLEWARE DB ERROR]:", err);
+          return next(err);
+        }
+
+        if (!user) {
+          // ما لقينا مستخدم له هذا الـ user_id → رجّعه للّوق إن
+          return res.redirect("/login.html");
+        }
+
+        // نخزن معلوماته هنا، نستخدمها بعدين في requireAdmin أو في الراوت
+        req.user = user;
+
+        next();
+      }
+    );
   } catch (err) {
     console.error("💥 [AUTH MIDDLEWARE ERROR]:", err);
-    // خليه يروح للـ error handler العام في server.js
     next(err);
   }
-};
+}
+
+// 👑 ميدل وير إضافي: يمنع أي أحد مو admin من الدخول
+function requireAdmin(req, res, next) {
+  // لازم authMiddleware يكون مشتغل قبل، عشان req.user تكون موجودة
+  if (!req.user || req.user.role !== "admin") {
+    return res.status(403).send("Access denied: admins only.");
+    // أو لو تبين ترجعيه للّوق إن:
+    // return res.redirect("/login.html");
+  }
+  next();
+}
+
+// نصدّر الميدل وير الأساسي كـ default (عشان الكود القديم يظل شغال)
+module.exports = authMiddleware;
+// ونصدّر extra helpers
+module.exports.requireAdmin = requireAdmin;
