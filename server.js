@@ -13,6 +13,31 @@ const PORT = 3000;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+
+// ---------- Security Headers (HTTPS/Headers) ----------
+app.use((req, res, next) => {
+  // يمنع المتصفح من تخمين نوع الملف (ضد بعض هجمات الـ MIME-sniffing)
+  res.setHeader("X-Content-Type-Options", "nosniff");
+
+  // يمنع فتح الموقع داخل iframe (يحمي من clickjacking)
+  res.setHeader("X-Frame-Options", "DENY");
+
+  // تشغيل فلتر XSS القديم في بعض المتصفحات (تكملة احتياطية)
+  res.setHeader("X-XSS-Protection", "1; mode=block");
+
+  // سياسة الريفيرر – ما يرسل تفاصيل الصفحة السابقة لمواقع ثانية
+  res.setHeader("Referrer-Policy", "no-referrer");
+
+  // HSTS: نقول للمتصفح "لو كان السيرفر HTTPS، خلك عليه دائمًا"
+  // (ما يضر حتى لو احنا شغالين على http://localhost)
+  res.setHeader(
+    "Strict-Transport-Security",
+    "max-age=63072000; includeSubDomains; preload"
+  );
+
+  next();
+}); 
+
 // ---------- Make db available ----------
 app.use((req, res, next) => {
   req.db = db;
