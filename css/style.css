@@ -126,11 +126,7 @@ body {
     height: 100vh;
     padding: 20px;
     border-radius: 10px;
-<<<<<<< HEAD
-    background-image: url('background2.png');  /* ضع هنا رابط صورة الخلفية لصفحة التسجيل */
-=======
     background-image: url('/img/background2.png');  /* ضع هنا رابط صورة الخلفية لصفحة التسجيل */
->>>>>>> 2f268f0 (add layals full project with database)
     background-size: cover;
     background-position: center;
 }
@@ -228,11 +224,7 @@ body {
     box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
     text-align: center;
     transition: transform 0.3s ease-in-out;
-<<<<<<< HEAD
-    background-image: url('background2.png');  /* ضع هنا رابط صورة الخلفية لصفحة التسجيل */
-=======
     background-image: url('/img/background2.png');  /* ضع هنا رابط صورة الخلفية لصفحة التسجيل */
->>>>>>> 2f268f0 (add layals full project with database)
     background-size: cover;
     background-position: center;
 }
@@ -296,11 +288,7 @@ body {
     box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
     text-align: center;
     transition: transform 0.3s ease-in-out;
-<<<<<<< HEAD
-    background-image: url("pic1.png");  /* ضع هنا رابط صورة الخلفية لصفحة التسجيل */
-=======
     background-image: url("/img/pic1.png");  /* ضع هنا رابط صورة الخلفية لصفحة التسجيل */
->>>>>>> 2f268f0 (add layals full project with database)
     background-size: cover;
     background-position: center;
 }
