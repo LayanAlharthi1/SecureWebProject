@@ -126,7 +126,7 @@ body {
     height: 100vh;
     padding: 20px;
     border-radius: 10px;
-    background-image: url('/img/background2.png');  /* ضع هنا رابط صورة الخلفية لصفحة التسجيل */
+    background-image: url('/img/background2.png');   
     background-size: cover;
     background-position: center;
 }
@@ -217,20 +217,20 @@ body {
 
 .team-member {
     padding: 20px;
-    width: 30%; /* لضبط عرض المربعات بشكل مناسب */
+    width: 30%; /*  */
     min-width: 250px; /* الحد الأدنى لعرض المربع */
     border-radius: 15px;
     color: white;
     box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
     text-align: center;
     transition: transform 0.3s ease-in-out;
-    background-image: url('/img/background2.png');  /* ضع هنا رابط صورة الخلفية لصفحة التسجيل */
+    background-image: url('/img/background2.png');  
     background-size: cover;
     background-position: center;
 }
 
 .team-member:hover {
-    transform: translateY(-10px); /* تأثير التحويم */
+    transform: translateY(-10px); /*   */
 }
 
 /* أيقونة الفريق */
@@ -281,20 +281,20 @@ body {
 
 .course-member {
     padding: 20px;
-    width: 30%; /* لضبط عرض المربعات بشكل مناسب */
-    min-width: 250px; /* الحد الأدنى لعرض المربع */
+    width: 30%;       
+    min-width: 250px; /*     */
     border-radius: 15px;
     color: white;
     box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
     text-align: center;
     transition: transform 0.3s ease-in-out;
-    background-image: url("/img/pic1.png");  /* ضع هنا رابط صورة الخلفية لصفحة التسجيل */
+    background-image: url("/img/pic1.png");       
     background-size: cover;
     background-position: center;
 }
 
 .course-member:hover {
-    transform: translateY(-10px); /* تأثير التحويم */
+    transform: translateY(-10px); /*   */
 }
 
 
