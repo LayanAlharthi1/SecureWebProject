@@ -3,12 +3,29 @@
 // ============================================
 
 const Student = (function() {
+
+     // *escape HTML to prevent XSS
+    function escapeHTML(str) {
+        return String(str)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
     // ========== PUBLIC API ==========
     return {
         initializeStudentDashboard: function() {
             const currentUser = Dashboard.getCurrentUser();
             
             try {
+
+                 // *checking user registered and the validation of data
+                if (!currentUser || !currentUser.name || !currentUser.studentName) {
+                    Dashboard.showNotification("Invalid student session", "error");
+                    return;
+                }
+
                 // Update UI
                 document.getElementById('dashboardTitle').textContent = 'Student Dashboard';
                 document.getElementById('welcomeMsg').textContent = `Welcome, ${currentUser.name}`;
@@ -38,7 +55,8 @@ const Student = (function() {
                 
             } catch (error) {
                 console.error("Failed to initialize student dashboard:", error);
-            }
+            //*general error message without details
+             Dashboard.showNotification("Error loading student dashboard", "error"); }
         }
     };
 })();

@@ -8,7 +8,10 @@ const router = express.Router();
 function hashPassword(password) {
   return crypto.createHash("sha256").update(password).digest("hex");
 }
-
+// *Sanitize text inputs (remove HTML tags)
+function sanitizeText(text) {
+  return text.replace(/<\/?[^>]+(>|$)/g, "").trim();
+}
 // GET /register (open the HTML page)
 router.get("/register", (req, res) => {
   res.sendFile(path.join(__dirname, "..", "public", "register.html"));
@@ -19,13 +22,33 @@ router.post("/register", (req, res, next) => {
   try {
     const { username, email, password } = req.body;
 
-    // 1) validate inputs
+    // 1) validate required fields
     if (!username || !email || !password) {
       return res.status(400).send("All fields are required.");
     }
 
+    // 2)* Sanitize inputs
+    const usernameClean = sanitizeText(username);
+    const emailClean = sanitizeText(email);
+
+    // 3) Validate formats
+
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const passwordPattern =
       /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
+    const usernamePattern = /^[A-Za-z0-9_]{3,20}$/;
+
+    if (!usernamePattern.test(usernameClean)) {
+      res.setHeader("Content-Type", "text/plain");
+      return res
+        .status(400)
+        .send("Username must be 3–20 characters and contain only letters, numbers, or underscores.");
+    }
+
+    if (!emailPattern.test(emailClean)) {
+      res.setHeader("Content-Type", "text/plain");
+      return res.status(400).send("Invalid email format.");
+    }
 
     if (!passwordPattern.test(password)) {
       return res
@@ -34,10 +57,10 @@ router.post("/register", (req, res, next) => {
           "Password must be at least 8 characters and include uppercase, lowercase, number, and special character."
         );
     }
-
+    // 4) hash password
     const passwordHash = hashPassword(password);
 
-    // 2) check if username or email already exist
+    // 5) check if username or email already exist
     db.get(
       "SELECT id FROM users WHERE username = ? OR email = ?",
       [username, email],
@@ -53,7 +76,7 @@ router.post("/register", (req, res, next) => {
             .send("Username or email is already registered.");
         }
 
-        // 3) insert new user
+        // 6) insert new user
         db.run(
           "INSERT INTO users (username, email, password) VALUES (?,?,?)",
           [username, email, passwordHash],

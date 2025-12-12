@@ -8,6 +8,12 @@ function hashPassword(password) {
   return crypto.createHash("sha256").update(password).digest("hex");
 }
 
+// *Sanitize text inputs
+  function sanitizeText(text) {
+    return text.replace(/<\/?[^>]+(>|$)/g, "").trim();
+    }
+
+
 router.post("/login", (req, res, next) => {
   try {
     const { username, password } = req.body;
@@ -15,6 +21,29 @@ router.post("/login", (req, res, next) => {
     if (!username || !password) {
       return res.status(400).send("Username and password are required.");
     }
+    const usernameClean = sanitizeText(username);
+    const passwordClean = sanitizeText(password);
+
+
+    // *Validation
+    const usernamePattern = /^[A-Za-z0-9_]{3,20}$/;
+    const passwordPattern =
+      /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
+
+    if (!usernamePattern.test(usernameClean)) {
+      res.setHeader("Content-Type", "text/plain");
+      return res
+        .status(400)
+        .send("Invalid username format.");
+    }
+
+    if (!passwordPattern.test(passwordClean)) {
+      res.setHeader("Content-Type", "text/plain");
+      return res
+        .status(400)
+        .send("Invalid password format.");
+    }
+
 
     db.get(
       "SELECT id, username, password, role FROM users WHERE username = ?",

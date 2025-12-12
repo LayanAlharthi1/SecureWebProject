@@ -198,6 +198,14 @@ const Dashboard = (function() {
                 showNotification('Invalid input detected. Please remove any script tags.', "error");
                 return;
             }
+
+
+            // *Validate rating input: must be a number between 1 and 5
+             const ratingValue = parseInt(rating, 10);
+              if (isNaN(ratingValue) || ratingValue < 1 || ratingValue > 5) {
+              showNotification("Invalid rating value!", "error");
+               return;
+            }
             
             if (currentUser.role === 'student' && studentName !== currentUser.studentName) {
                 showNotification('You can only submit feedback using your own name.', "warning");
