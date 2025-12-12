@@ -180,7 +180,7 @@ app.use((req, res, next) => {
   );
 
   next();
-}); 
+});
 
 // ---------- Make db available ----------
 app.use((req, res, next) => {
@@ -308,6 +308,29 @@ app.post("/feedback", async (req, res) => {
   }
 });
 
+// ---------- NEW: Get all feedback for admin ----------
+app.get("/feedback", requireLogin, requireRole("admin"), (req, res) => {
+  const sql = `
+    SELECT 
+      id,
+      student_name AS studentName,
+      course,
+      rating,
+      message,
+      difficulty
+    FROM feedback
+    ORDER BY id DESC
+  `;
+
+  req.db.all(sql, [], (err, rows) => {
+    if (err) {
+      console.error("DB error reading feedback:", err);
+      return res.status(500).json({ error: "Database error" });
+    }
+
+    res.json(rows); // يرجع كل الفيدباكات للأدمن
+  });
+});
 
 // ---------- Static files ----------
 app.use(express.static(path.join(__dirname, "public")));

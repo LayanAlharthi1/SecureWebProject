@@ -850,81 +850,82 @@
     </div>
 
     <script>
-        // ============================================
-        // CYBER SECURITY COURSE FEEDBACK - ADMIN DASHBOARD
-        // All JavaScript merged into one file
-        // ============================================
+    // ============================================
+    // CYBER SECURITY COURSE FEEDBACK - ADMIN DASHBOARD
+    // Uses real data from backend (/feedback)
+    // ============================================
 
-        // ========== GLOBAL VARIABLES ==========
-        let feedbacks = [];
-        let displayedFeedbacks = [];
-        let notificationsEnabled = true;
-        
-        // ========== COURSE DATABASE ==========
-        const courseInfo = {
-            "secure-web-dev": {
-                name: "Secure Web Development",
-                category: "Cybersecurity",
-                difficulty: "medium"
-            },
-            "security-software": {
-                name: "Security Software Engineering",
-                category: "Cybersecurity",
-                difficulty: "hard"
-            },
-            "operating-system": {
-                name: "Operating System",
-                category: "Computer Science",
-                difficulty: "hard"
-            },
-            "network-intro": {
-                name: "Introduction To Network",
-                category: "Networking",
-                difficulty: "medium"
-            },
-            "cyber-fundamentals": {
-                name: "Cyber Security Fundamental",
-                category: "Cybersecurity",
-                difficulty: "easy"
-            },
-            "secure-coding": {
-                name: "Secure Coding",
-                category: "Cybersecurity",
-                difficulty: "medium"
-            },
-            "database-fundamental": {
-                name: "Database Fundamental",
-                category: "Database",
-                difficulty: "medium"
-            },
-            "cyber-laws": {
-                name: "Cybersecurity policies and laws",
-                category: "Cybersecurity",
-                difficulty: "easy"
-            }
-        };
+    // ========== GLOBAL VARIABLES ==========
+    let feedbacks = [];
+    let displayedFeedbacks = [];
+    let notificationsEnabled = true;
 
-        // ========== HELPER FUNCTIONS ==========
-        
-        function sanitizeInput(text) {
-            if (!text) return '';
-            return text.toString()
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#039;');
-        }
-        
-        function validateInput(text) {
-            return !/<script\b/i.test(text);
-        }
-        
-        function showNotification(message, type = "info") {
-            if (!notificationsEnabled) return;
-            
-            const notification = document.createElement('div');
-            notification.style.cssText = `
+    // ========== COURSE DATABASE ==========
+    const courseInfo = {
+        "secure-web-dev": {
+            name: "Secure Web Development",
+            category: "Cybersecurity",
+            difficulty: "medium",
+        },
+        "security-software": {
+            name: "Security Software Engineering",
+            category: "Cybersecurity",
+            difficulty: "hard",
+        },
+        "operating-system": {
+            name: "Operating System",
+            category: "Computer Science",
+            difficulty: "hard",
+        },
+        "network-intro": {
+            name: "Introduction To Network",
+            category: "Networking",
+            difficulty: "medium",
+        },
+        "cyber-fundamentals": {
+            name: "Cyber Security Fundamental",
+            category: "Cybersecurity",
+            difficulty: "easy",
+        },
+        "secure-coding": {
+            name: "Secure Coding",
+            category: "Cybersecurity",
+            difficulty: "medium",
+        },
+        "database-fundamental": {
+            name: "Database Fundamental",
+            category: "Database",
+            difficulty: "medium",
+        },
+        "cyber-laws": {
+            name: "Cybersecurity policies and laws",
+            category: "Cybersecurity",
+            difficulty: "easy",
+        },
+    };
+
+    // ========== HELPER FUNCTIONS ==========
+
+    function sanitizeInput(text) {
+        if (!text) return "";
+        return text
+            .toString()
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    function validateInput(text) {
+        return !/<script\b/i.test(text);
+    }
+
+    function showNotification(message, type = "info") {
+        if (!notificationsEnabled) return;
+
+        const notification = document.createElement("div");
+        notification.style.cssText = `
                 position: fixed;
                 top: 20px;
                 right: 20px;
@@ -936,596 +937,719 @@
                 animation: slideIn 0.3s ease;
                 box-shadow: 0 4px 12px rgba(0,0,0,0.15);
             `;
-            
-            if (type === "success") {
-                notification.style.backgroundColor = "#10b981";
-            } else if (type === "warning") {
-                notification.style.backgroundColor = "#f59e0b";
-            } else if (type === "error") {
-                notification.style.backgroundColor = "#ef4444";
-            } else {
-                notification.style.backgroundColor = "#3b82f6";
-            }
-            
-            notification.textContent = message;
-            document.body.appendChild(notification);
-            
+
+        if (type === "success") {
+            notification.style.backgroundColor = "#10b981";
+        } else if (type === "warning") {
+            notification.style.backgroundColor = "#f59e0b";
+        } else if (type === "error") {
+            notification.style.backgroundColor = "#ef4444";
+        } else {
+            notification.style.backgroundColor = "#3b82f6";
+        }
+
+        notification.textContent = message;
+        document.body.appendChild(notification);
+
+        setTimeout(() => {
+            notification.style.animation = "slideOut 0.3s ease";
             setTimeout(() => {
-                notification.style.animation = "slideOut 0.3s ease";
-                setTimeout(() => {
-                    if (notification.parentNode) {
-                        notification.parentNode.removeChild(notification);
-                    }
-                }, 300);
-            }, 3000);
-        }
-        
-        // ========== DASHBOARD STATISTICS ==========
-        
-        function updateDashboardStats() {
-            try {
-                // For admin, show all stats
-                const uniqueStudents = new Set(feedbacks.map(f => f.student));
-                let totalRating = 0;
-                feedbacks.forEach(f => totalRating += f.rating);
-                const avgRating = feedbacks.length > 0 ? (totalRating / feedbacks.length).toFixed(1) : "0.0";
-                
-                document.getElementById('totalCourses').textContent = Object.keys(courseInfo).length;
-                document.getElementById('activeStudents').textContent = uniqueStudents.size;
-                document.getElementById('totalFeedback').textContent = feedbacks.length;
-                document.getElementById('avgRating').textContent = avgRating;
-            } catch (error) {
-                console.error("Error updating stats:", error);
-            }
-        }
-        
-        // ========== FEEDBACK MANAGEMENT ==========
-        
-        function setRating(rating) {
-            document.querySelectorAll('.star').forEach((star, index) => {
-                star.classList.toggle('active', index < rating);
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 300);
+        }, 3000);
+    }
+
+    // ========== LOAD FEEDBACK FROM BACKEND ==========
+
+    async function loadFeedbackFromServer() {
+        const container = document.getElementById("feedbackContainer");
+        try {
+            const res = await fetch("/feedback", {
+                method: "GET",
+                headers: {
+                    "Accept": "application/json",
+                },
             });
-            document.getElementById('rating').value = rating;
-        }
-        
-        function addFeedback(event) {
-            event.preventDefault();
-            
-            try {
-                const studentName = document.getElementById('studentName').value.trim();
-                const course = document.getElementById('course').value;
-                const rating = document.getElementById('rating').value;
-                const message = document.getElementById('message').value.trim();
-                const difficulty = document.getElementById('difficulty').value;
-                
-                if (!studentName || !course || !rating || !message) {
-                    showNotification('Please fill all required fields!', "warning");
-                    return;
-                }
-                
-                if (!validateInput(message)) {
-                    showNotification('Invalid input detected. Please remove any script tags.', "error");
-                    return;
-                }
-                
-                const courseName = courseInfo[course].name;
+
+            if (!res.ok) {
+                throw new Error("Failed to load feedback");
+            }
+
+            const rows = await res.json();
+
+            // نحول بيانات الـ DB إلى الشكل اللي تستخدمه الداشبورد
+            feedbacks = rows.map((row) => {
+                const courseId = row.course;
+                const course = courseInfo[courseId];
                 const now = new Date();
-                const formattedDate = now.toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: '2-digit',
-                    year: 'numeric'
+                const formattedDate = now.toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "2-digit",
+                    year: "numeric",
                 });
-                
-                const safeMessage = sanitizeInput(message);
-                
-                const newFeedback = {
-                    id: Date.now(),
-                    course: course,
-                    courseName: courseName,
-                    rating: parseInt(rating),
-                    message: safeMessage,
-                    difficulty: difficulty,
+
+                return {
+                    id: row.id,
+                    course: courseId,
+                    courseName: course ? course.name : courseId,
+                    rating: Number(row.rating) || 0,
+                    message: row.message || "",
+                    difficulty: row.difficulty || (course ? course.difficulty : "medium"),
                     date: formattedDate,
-                    student: studentName,
-                    timestamp: now.getTime()
+                    student: row.studentName || "Student",
+                    timestamp: now.getTime(),
                 };
-                
-                feedbacks.unshift(newFeedback);
-                
-                updateDashboardStats();
-                filterFeedbacks();
-                updateCourseTable();
-                
-                document.getElementById('feedbackForm').reset();
-                document.querySelectorAll('.star').forEach(star => {
-                    star.classList.remove('active');
-                });
-                
-                showNotification('Thank you for your feedback! ✓', "success");
-                
-            } catch (error) {
-                console.error("Error adding feedback:", error);
-                showNotification("Failed to submit feedback", "error");
-            }
+            });
+
+            displayedFeedbacks = [...feedbacks];
+        } catch (error) {
+            console.error("Error loading feedback from server:", error);
+            showNotification("Failed to load feedback from server", "error");
+            feedbacks = [];
+            displayedFeedbacks = [];
+            container.innerHTML = `
+                <div style="text-align: center; color: var(--clr-info-dark); padding: 2rem;">
+                    Failed to load feedback.
+                </div>
+            `;
         }
-        
-        function filterFeedbacks() {
-            try {
-                const courseFilter = document.getElementById('filterCourse').value;
-                const sortOption = document.getElementById('sortFeedback').value;
-                
-                let filteredFeedbacks = [...feedbacks];
-                
+    }
+
+    // ========== DASHBOARD STATISTICS ==========
+
+    function updateDashboardStats() {
+        try {
+            const uniqueStudents = new Set(feedbacks.map((f) => f.student));
+            let totalRating = 0;
+            feedbacks.forEach((f) => (totalRating += f.rating));
+            const avgRating =
+                feedbacks.length > 0
+                    ? (totalRating / feedbacks.length).toFixed(1)
+                    : "0.0";
+
+            document.getElementById("totalCourses").textContent = Object.keys(
+                courseInfo
+            ).length;
+            document.getElementById("activeStudents").textContent =
+                uniqueStudents.size;
+            document.getElementById("totalFeedback").textContent =
+                feedbacks.length;
+            document.getElementById("avgRating").textContent = avgRating;
+        } catch (error) {
+            console.error("Error updating stats:", error);
+        }
+    }
+
+    // ========== FEEDBACK MANAGEMENT ==========
+
+    function setRating(rating) {
+        document.querySelectorAll(".star").forEach((star, index) => {
+            star.classList.toggle("active", index < rating);
+        });
+        document.getElementById("rating").value = rating;
+    }
+
+    async function addFeedback(event) {
+        event.preventDefault();
+
+        try {
+            const studentName = document
+                .getElementById("studentName")
+                .value.trim();
+            const course = document.getElementById("course").value;
+            const rating = document.getElementById("rating").value;
+            const message = document
+                .getElementById("message")
+                .value.trim();
+            const difficulty = document.getElementById("difficulty").value;
+
+            if (!studentName || !course || !rating || !message) {
+                showNotification("Please fill all required fields!", "warning");
+                return;
+            }
+
+            if (!validateInput(message)) {
+                showNotification(
+                    "Invalid input detected. Please remove any script tags.",
+                    "error"
+                );
+                return;
+            }
+
+            const courseName = courseInfo[course].name;
+
+            // أولاً: نرسلها للباك إند عشان تنحفظ في الداتابيس
+            const payload = {
+                studentName,
+                course,
+                rating,
+                message, // نخزن النص الخام، ونفلتر عند العرض
+                difficulty,
+            };
+
+            const res = await fetch("/feedback", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(payload),
+            });
+
+            if (!res.ok) {
+                showNotification("Failed to save feedback to server", "error");
+                return;
+            }
+
+            const data = await res.json(); // فيه { id: lastID }
+
+            const now = new Date();
+            const formattedDate = now.toLocaleDateString("en-US", {
+                month: "short",
+                day: "2-digit",
+                year: "numeric",
+            });
+
+            const newFeedback = {
+                id: data.id,
+                course,
+                courseName,
+                rating: parseInt(rating),
+                message,
+                difficulty,
+                date: formattedDate,
+                student: studentName,
+                timestamp: now.getTime(),
+            };
+
+            feedbacks.unshift(newFeedback);
+
+            updateDashboardStats();
+            filterFeedbacks();
+            updateCourseTable();
+
+            document.getElementById("feedbackForm").reset();
+            document.querySelectorAll(".star").forEach((star) => {
+                star.classList.remove("active");
+            });
+
+            showNotification("Thank you for your feedback! ✓", "success");
+        } catch (error) {
+            console.error("Error adding feedback:", error);
+            showNotification("Failed to submit feedback", "error");
+        }
+    }
+
+    function filterFeedbacks() {
+        try {
+            const courseFilter = document.getElementById("filterCourse").value;
+            const sortOption = document.getElementById("sortFeedback").value;
+
+            let filteredFeedbacks = [...feedbacks];
+
+            if (courseFilter) {
+                filteredFeedbacks = filteredFeedbacks.filter(
+                    (fb) => fb.course === courseFilter
+                );
+            }
+
+            switch (sortOption) {
+                case "newest":
+                    filteredFeedbacks.sort(
+                        (a, b) => b.timestamp - a.timestamp
+                    );
+                    break;
+                case "oldest":
+                    filteredFeedbacks.sort(
+                        (a, b) => a.timestamp - b.timestamp
+                    );
+                    break;
+                case "highest-rating":
+                    filteredFeedbacks.sort(
+                        (a, b) => b.rating - a.rating
+                    );
+                    break;
+                case "lowest-rating":
+                    filteredFeedbacks.sort(
+                        (a, b) => a.rating - b.rating
+                    );
+                    break;
+            }
+
+            displayedFeedbacks = filteredFeedbacks;
+            renderFeedbacks();
+        } catch (error) {
+            console.error("Error filtering feedback:", error);
+        }
+    }
+
+    function renderFeedbacks() {
+        const container = document.getElementById("feedbackContainer");
+
+        try {
+            if (displayedFeedbacks.length === 0) {
+                const courseFilter =
+                    document.getElementById("filterCourse").value;
+                let message = "No feedback found";
+
                 if (courseFilter) {
-                    filteredFeedbacks = filteredFeedbacks.filter(fb => fb.course === courseFilter);
+                    message += " for this course";
                 }
-                
-                switch(sortOption) {
-                    case 'newest':
-                        filteredFeedbacks.sort((a, b) => b.timestamp - a.timestamp);
-                        break;
-                    case 'oldest':
-                        filteredFeedbacks.sort((a, b) => a.timestamp - b.timestamp);
-                        break;
-                    case 'highest-rating':
-                        filteredFeedbacks.sort((a, b) => b.rating - a.rating);
-                        break;
-                    case 'lowest-rating':
-                        filteredFeedbacks.sort((a, b) => a.rating - b.rating);
-                        break;
-                }
-                
-                displayedFeedbacks = filteredFeedbacks;
-                renderFeedbacks();
-                
-            } catch (error) {
-                console.error("Error filtering feedback:", error);
-            }
-        }
-        
-        function renderFeedbacks() {
-            const container = document.getElementById('feedbackContainer');
-            
-            try {
-                if (displayedFeedbacks.length === 0) {
-                    const courseFilter = document.getElementById('filterCourse').value;
-                    let message = 'No feedback found';
-                    
-                    if (courseFilter) {
-                        message += ' for this course';
-                    }
-                    
-                    container.innerHTML = `
+
+                container.innerHTML = `
                         <div style="text-align: center; color: var(--clr-info-dark); padding: 2rem;">
                             ${message}
                         </div>
                     `;
-                    return;
-                }
-                
-                container.innerHTML = displayedFeedbacks.map(feedback => `
+                return;
+            }
+
+            container.innerHTML = displayedFeedbacks
+                .map(
+                    (feedback) => `
                     <div class="feedback-card">
                         <div class="feedback-header">
                             <span class="course-badge">${feedback.courseName}</span>
                             <span class="difficulty-badge difficulty-${feedback.difficulty}">
-                                ${feedback.difficulty.charAt(0).toUpperCase() + feedback.difficulty.slice(1)}
+                                ${
+                                    feedback.difficulty
+                                        .charAt(0)
+                                        .toUpperCase() +
+                                    feedback.difficulty.slice(1)
+                                }
                             </span>
                         </div>
                         <div class="feedback-rating">
-                            ${'★'.repeat(feedback.rating)}${'☆'.repeat(5 - feedback.rating)}
+                            ${"★".repeat(feedback.rating)}${"☆".repeat(
+                        5 - feedback.rating
+                    )}
                             <span style="margin-left: 8px; color: var(--clr-dark); font-size: 0.9rem;">
                                 (${feedback.rating}/5)
                             </span>
                         </div>
-                        <div class="feedback-message">${sanitizeInput(feedback.message)}</div>
+                        <div class="feedback-message">${sanitizeInput(
+                            feedback.message
+                        )}</div>
                         <div class="feedback-footer">
                             <span>${feedback.date}</span>
                             <span>By: ${feedback.student}</span>
                         </div>
-                        
+
                         <div class="feedback-actions">
-                            <button class="action-btn btn-view" onclick="viewFeedbackDetails(${feedback.id})">
+                            <button class="action-btn btn-view" onclick="viewFeedbackDetails(${
+                                feedback.id
+                            })">
                                 👁️ View Details
                             </button>
-                            <button class="action-btn btn-delete" onclick="deleteFeedback(${feedback.id})">
-                                🗑️ Delete
+                            <button class="action-btn btn-delete" onclick="deleteFeedback(${
+                                feedback.id
+                            })">
+                                🗑️ Delete (UI only)
                             </button>
                         </div>
                     </div>
-                `).join('');
-                
-            } catch (error) {
-                console.error("Error rendering feedback:", error);
-            }
+                `
+                )
+                .join("");
+        } catch (error) {
+            console.error("Error rendering feedback:", error);
         }
-        
-        function viewFeedbackDetails(feedbackId) {
-            try {
-                const feedback = feedbacks.find(f => f.id === feedbackId);
-                if (!feedback) {
-                    showNotification('Feedback not found!', "error");
-                    return;
-                }
-                
-                const course = courseInfo[feedback.course];
-                const message = `
-                    📋 Feedback Details:
-                    
-                    👤 Student: ${feedback.student}
-                    📚 Course: ${feedback.courseName}
-                    ⭐ Rating: ${feedback.rating}/5
-                    📅 Date: ${feedback.date}
-                    🎯 Difficulty: ${feedback.difficulty.toUpperCase()}
-                    📝 Message: ${feedback.message}
-                    
-                    ${course ? `📊 Course Category: ${course.category}` : ''}
-                `;
-                
-                alert(message);
-            } catch (error) {
-                console.error("Error viewing feedback details:", error);
+    }
+
+    function viewFeedbackDetails(feedbackId) {
+        try {
+            const feedback = feedbacks.find((f) => f.id === feedbackId);
+            if (!feedback) {
+                showNotification("Feedback not found!", "error");
+                return;
             }
+
+            const course = courseInfo[feedback.course];
+            const message = `
+📋 Feedback Details:
+
+👤 Student: ${feedback.student}
+📚 Course: ${feedback.courseName}
+⭐ Rating: ${feedback.rating}/5
+📅 Date: ${feedback.date}
+🎯 Difficulty: ${feedback.difficulty.toUpperCase()}
+📝 Message: ${feedback.message}
+
+${
+    course
+        ? `📊 Course Category: ${course.category}`
+        : ""
+}
+            `;
+
+            alert(message);
+        } catch (error) {
+            console.error("Error viewing feedback details:", error);
         }
-        
-        function deleteFeedback(feedbackId) {
-            try {
-                const feedbackIndex = feedbacks.findIndex(f => f.id === feedbackId);
-                if (feedbackIndex === -1) {
-                    showNotification('Feedback not found!', "error");
-                    return;
-                }
-                
-                const feedback = feedbacks[feedbackIndex];
-                
-                if (!confirm(`Are you sure you want to delete feedback from "${feedback.student}"?\n\nCourse: ${feedback.courseName}\nRating: ${feedback.rating}/5`)) {
-                    return;
-                }
-                
-                feedbacks.splice(feedbackIndex, 1);
-                
-                updateDashboardStats();
-                filterFeedbacks();
-                updateCourseTable();
-                
-                showNotification('Feedback deleted successfully! ✓', "success");
-                
-            } catch (error) {
-                console.error("Error deleting feedback:", error);
-                showNotification("Failed to delete feedback", "error");
+    }
+
+    function deleteFeedback(feedbackId) {
+        try {
+            const feedbackIndex = feedbacks.findIndex(
+                (f) => f.id === feedbackId
+            );
+            if (feedbackIndex === -1) {
+                showNotification("Feedback not found!", "error");
+                return;
             }
+
+            const feedback = feedbacks[feedbackIndex];
+
+            if (
+                !confirm(
+                    `Are you sure you want to delete feedback from "${feedback.student}"?\n\nCourse: ${feedback.courseName}\nRating: ${feedback.rating}/5\n\n(Will be removed from this view only)`
+                )
+            ) {
+                return;
+            }
+
+            // ملاحظة: هذا يحذفها من الواجهة فقط، مو من الداتابيس
+            feedbacks.splice(feedbackIndex, 1);
+
+            updateDashboardStats();
+            filterFeedbacks();
+            updateCourseTable();
+
+            showNotification("Feedback deleted from view ✓", "success");
+        } catch (error) {
+            console.error("Error deleting feedback:", error);
+            showNotification("Failed to delete feedback", "error");
         }
-        
-        // ========== ADMIN TABLE FUNCTIONS ==========
-        
-        let allTableData = [];
-        let displayedTableData = [];
-        
-        function calculateCourseStats() {
-            const stats = {};
-            
-            Object.keys(courseInfo).forEach(courseId => {
-                stats[courseId] = {
-                    totalRatings: 0,
-                    count: 0,
-                    difficulties: [],
-                    avgRating: 0,
-                    category: courseInfo[courseId].category,
-                    name: courseInfo[courseId].name
-                };
-            });
-            
-            feedbacks.forEach(feedback => {
-                if (stats[feedback.course]) {
-                    stats[feedback.course].totalRatings += feedback.rating;
-                    stats[feedback.course].count++;
-                    stats[feedback.course].difficulties.push(feedback.difficulty);
-                }
-            });
-            
-            Object.keys(stats).forEach(courseId => {
-                stats[courseId].avgRating = stats[courseId].count > 0 
-                    ? (stats[courseId].totalRatings / stats[courseId].count).toFixed(1)
+    }
+
+    // ========== ADMIN TABLE FUNCTIONS ==========
+
+    let allTableData = [];
+    let displayedTableData = [];
+
+    function calculateCourseStats() {
+        const stats = {};
+
+        Object.keys(courseInfo).forEach((courseId) => {
+            stats[courseId] = {
+                totalRatings: 0,
+                count: 0,
+                difficulties: [],
+                avgRating: 0,
+                category: courseInfo[courseId].category,
+                name: courseInfo[courseId].name,
+            };
+        });
+
+        feedbacks.forEach((feedback) => {
+            if (stats[feedback.course]) {
+                stats[feedback.course].totalRatings += feedback.rating;
+                stats[feedback.course].count++;
+                stats[feedback.course].difficulties.push(feedback.difficulty);
+            }
+        });
+
+        Object.keys(stats).forEach((courseId) => {
+            stats[courseId].avgRating =
+                stats[courseId].count > 0
+                    ? (
+                          stats[courseId].totalRatings /
+                          stats[courseId].count
+                      ).toFixed(1)
                     : 0;
-            });
-            
-            return stats;
-        }
-        
-        function prepareAllTableData() {
-            const courseStats = calculateCourseStats();
-            
-            allTableData = [];
-            
-            Object.keys(courseInfo).forEach(courseId => {
-                const info = courseInfo[courseId];
-                const stats = courseStats[courseId];
-                
-                let difficulty = info.difficulty;
-                if (stats.difficulties.length > 0) {
-                    const difficultyCount = {};
-                    stats.difficulties.forEach(d => {
-                        difficultyCount[d] = (difficultyCount[d] || 0) + 1;
-                    });
-                    
-                    const mostCommon = Object.keys(difficultyCount).reduce((a, b) => 
-                        difficultyCount[a] > difficultyCount[b] ? a : b
-                    );
-                    difficulty = mostCommon;
-                }
-                
-                allTableData.push({
-                    id: courseId,
-                    name: info.name,
-                    category: info.category,
-                    avgRating: parseFloat(stats.avgRating),
-                    difficulty: difficulty,
-                    totalFeedback: stats.count,
-                    status: stats.count > 0 ? 'Active' : 'No Feedback'
+        });
+
+        return stats;
+    }
+
+    function prepareAllTableData() {
+        const courseStats = calculateCourseStats();
+
+        allTableData = [];
+
+        Object.keys(courseInfo).forEach((courseId) => {
+            const info = courseInfo[courseId];
+            const stats = courseStats[courseId];
+
+            let difficulty = info.difficulty;
+            if (stats.difficulties.length > 0) {
+                const difficultyCount = {};
+                stats.difficulties.forEach((d) => {
+                    difficultyCount[d] = (difficultyCount[d] || 0) + 1;
                 });
+
+                const mostCommon = Object.keys(difficultyCount).reduce((a, b) =>
+                    difficultyCount[a] > difficultyCount[b] ? a : b
+                );
+                difficulty = mostCommon;
+            }
+
+            allTableData.push({
+                id: courseId,
+                name: info.name,
+                category: info.category,
+                avgRating: parseFloat(stats.avgRating),
+                difficulty: difficulty,
+                totalFeedback: stats.count,
+                status: stats.count > 0 ? "Active" : "No Feedback",
             });
-            
-            displayedTableData = [...allTableData];
-        }
-        
-        function renderTable() {
-            const tbody = document.getElementById('courseTableBody');
-            
-            try {
-                tbody.innerHTML = '';
-                
-                if (displayedTableData.length === 0) {
-                    tbody.innerHTML = `
+        });
+
+        displayedTableData = [...allTableData];
+    }
+
+    function renderTable() {
+        const tbody = document.getElementById("courseTableBody");
+
+        try {
+            tbody.innerHTML = "";
+
+            if (displayedTableData.length === 0) {
+                tbody.innerHTML = `
                         <tr>
                             <td colspan="6" style="text-align: center; color: var(--clr-info-dark); padding: 2rem;">
                                 No courses match the selected filters
                             </td>
                         </tr>
                     `;
-                    return;
-                }
-                
-                displayedTableData.forEach(course => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
+                return;
+            }
+
+            displayedTableData.forEach((course) => {
+                const row = document.createElement("tr");
+                row.innerHTML = `
                         <td>${course.name}</td>
                         <td>${course.category}</td>
                         <td><span class="rating-number">${course.avgRating}</span>/5</td>
                         <td><span class="difficulty-badge difficulty-${course.difficulty}">
-                            ${course.difficulty.charAt(0).toUpperCase() + course.difficulty.slice(1)}
+                            ${
+                                course.difficulty
+                                    .charAt(0)
+                                    .toUpperCase() +
+                                course.difficulty.slice(1)
+                            }
                         </span></td>
                         <td>${course.totalFeedback}</td>
                         <td>${course.status}</td>
                     `;
-                    tbody.appendChild(row);
-                });
-                
-            } catch (error) {
-                console.error("Error rendering table:", error);
-            }
+                tbody.appendChild(row);
+            });
+        } catch (error) {
+            console.error("Error rendering table:", error);
         }
-        
-        function filterTable() {
-            try {
-                const categoryFilter = document.getElementById('filterCategory').value;
-                const statusFilter = document.getElementById('filterStatus').value;
-                const sortOption = document.getElementById('sortTable').value;
-                
-                let filteredData = [...allTableData];
-                
-                if (categoryFilter) {
-                    filteredData = filteredData.filter(item => item.category === categoryFilter);
-                }
-                
-                if (statusFilter) {
-                    filteredData = filteredData.filter(item => item.status === statusFilter);
-                }
-                
-                switch(sortOption) {
-                    case 'name-asc':
-                        filteredData.sort((a, b) => a.name.localeCompare(b.name));
-                        break;
-                    case 'name-desc':
-                        filteredData.sort((a, b) => b.name.localeCompare(a.name));
-                        break;
-                    case 'rating-desc':
-                        filteredData.sort((a, b) => b.avgRating - a.avgRating);
-                        break;
-                    case 'rating-asc':
-                        filteredData.sort((a, b) => a.avgRating - b.avgRating);
-                        break;
-                    case 'feedback-desc':
-                        filteredData.sort((a, b) => b.totalFeedback - a.totalFeedback);
-                        break;
-                    case 'feedback-asc':
-                        filteredData.sort((a, b) => a.totalFeedback - b.totalFeedback);
-                        break;
-                }
-                
-                displayedTableData = filteredData;
-                renderTable();
-                
-            } catch (error) {
-                console.error("Error filtering table:", error);
+    }
+
+    function filterTable() {
+        try {
+            const categoryFilter =
+                document.getElementById("filterCategory").value;
+            const statusFilter =
+                document.getElementById("filterStatus").value;
+            const sortOption = document.getElementById("sortTable").value;
+
+            let filteredData = [...allTableData];
+
+            if (categoryFilter) {
+                filteredData = filteredData.filter(
+                    (item) => item.category === categoryFilter
+                );
             }
-        }
-        
-        function updateCourseTable() {
-            prepareAllTableData();
+
+            if (statusFilter) {
+                filteredData = filteredData.filter(
+                    (item) => item.status === statusFilter
+                );
+            }
+
+            switch (sortOption) {
+                case "name-asc":
+                    filteredData.sort((a, b) =>
+                        a.name.localeCompare(b.name)
+                    );
+                    break;
+                case "name-desc":
+                    filteredData.sort((a, b) =>
+                        b.name.localeCompare(a.name)
+                    );
+                    break;
+                case "rating-desc":
+                    filteredData.sort(
+                        (a, b) => b.avgRating - a.avgRating
+                    );
+                    break;
+                case "rating-asc":
+                    filteredData.sort(
+                        (a, b) => a.avgRating - b.avgRating
+                    );
+                    break;
+                case "feedback-desc":
+                    filteredData.sort(
+                        (a, b) => b.totalFeedback - a.totalFeedback
+                    );
+                    break;
+                case "feedback-asc":
+                    filteredData.sort(
+                        (a, b) => a.totalFeedback - b.totalFeedback
+                    );
+                    break;
+            }
+
+            displayedTableData = filteredData;
             renderTable();
+        } catch (error) {
+            console.error("Error filtering table:", error);
         }
-        
-        // ========== THEME MANAGEMENT ==========
-        
-        function toggleTheme() {
-            document.body.classList.toggle('dark-theme-variables');
-            
-            const themeToggler = document.getElementById('themeToggler');
-            const spans = themeToggler.querySelectorAll('span');
-            
-            const isDarkMode = document.body.classList.contains('dark-theme-variables');
-            
-            if (isDarkMode) {
-                spans[0].classList.remove('active');
-                spans[1].classList.add('active');
-            } else {
-                spans[0].classList.add('active');
-                spans[1].classList.remove('active');
-            }
-            
-            localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
-            
-            showNotification(`Theme changed to ${isDarkMode ? 'dark' : 'light'} mode`, "info");
+    }
+
+    function updateCourseTable() {
+        prepareAllTableData();
+        renderTable();
+    }
+
+    // ========== THEME MANAGEMENT ==========
+
+    function toggleTheme() {
+        document.body.classList.toggle("dark-theme-variables");
+
+        const themeToggler = document.getElementById("themeToggler");
+        const spans = themeToggler.querySelectorAll("span");
+
+        const isDarkMode =
+            document.body.classList.contains("dark-theme-variables");
+
+        if (isDarkMode) {
+            spans[0].classList.remove("active");
+            spans[1].classList.add("active");
+        } else {
+            spans[0].classList.add("active");
+            spans[1].classList.remove("active");
         }
-        
-        function initializeTheme() {
-            const savedTheme = localStorage.getItem('theme') || 'light';
-            const themeToggler = document.getElementById('themeToggler');
-            const spans = themeToggler.querySelectorAll('span');
-            
-            if (savedTheme === 'dark') {
-                document.body.classList.add('dark-theme-variables');
-                spans[0].classList.remove('active');
-                spans[1].classList.add('active');
-            } else {
-                document.body.classList.remove('dark-theme-variables');
-                spans[0].classList.add('active');
-                spans[1].classList.remove('active');
-            }
+
+        localStorage.setItem("theme", isDarkMode ? "dark" : "light");
+
+        showNotification(
+            `Theme changed to ${isDarkMode ? "dark" : "light"} mode`,
+            "info"
+        );
+    }
+
+    function initializeTheme() {
+        const savedTheme = localStorage.getItem("theme") || "light";
+        const themeToggler = document.getElementById("themeToggler");
+        const spans = themeToggler.querySelectorAll("span");
+
+        if (savedTheme === "dark") {
+            document.body.classList.add("dark-theme-variables");
+            spans[0].classList.remove("active");
+            spans[1].classList.add("active");
+        } else {
+            document.body.classList.remove("dark-theme-variables");
+            spans[0].classList.add("active");
+            spans[1].classList.remove("active");
         }
-        
-        // ========== NOTIFICATION MANAGEMENT ==========
-        
-        function toggleNotifications() {
-            notificationsEnabled = !notificationsEnabled;
-            const switchElement = document.getElementById('notificationSwitch');
-            
-            if (notificationsEnabled) {
-                switchElement.classList.add('active');
-                showNotification("Notifications enabled", "success");
-                localStorage.setItem('notificationsEnabled', 'true');
-            } else {
-                switchElement.classList.remove('active');
-                showNotification("Notifications disabled", "warning");
-                localStorage.setItem('notificationsEnabled', 'false');
-            }
+    }
+
+    // ========== NOTIFICATION MANAGEMENT ==========
+
+    function toggleNotifications() {
+        notificationsEnabled = !notificationsEnabled;
+        const switchElement = document.getElementById("notificationSwitch");
+
+        if (notificationsEnabled) {
+            switchElement.classList.add("active");
+            showNotification("Notifications enabled", "success");
+            localStorage.setItem("notificationsEnabled", "true");
+        } else {
+            switchElement.classList.remove("active");
+            showNotification("Notifications disabled", "warning");
+            localStorage.setItem("notificationsEnabled", "false");
         }
-        
-        function initializeNotifications() {
-            const savedState = localStorage.getItem('notificationsEnabled');
-            notificationsEnabled = savedState === null ? true : savedState === 'true';
-            const switchElement = document.getElementById('notificationSwitch');
-            
-            if (notificationsEnabled) {
-                switchElement.classList.add('active');
-            } else {
-                switchElement.classList.remove('active');
-            }
+    }
+
+    function initializeNotifications() {
+        const savedState = localStorage.getItem("notificationsEnabled");
+        notificationsEnabled =
+            savedState === null ? true : savedState === "true";
+        const switchElement = document.getElementById("notificationSwitch");
+
+        if (notificationsEnabled) {
+            switchElement.classList.add("active");
+        } else {
+            switchElement.classList.remove("active");
         }
-        
-        // ========== LOGOUT ==========
-        
-        function logout() {
-            if (confirm('Are you sure you want to logout?')) {
-                localStorage.removeItem('theme');
-                showNotification('Logged out successfully!', "success");
-                setTimeout(() => {
-                    window.location.href = "login.html";
-                }, 1000);
-            }
+    }
+
+    // ========== LOGOUT ==========
+
+    function logout() {
+        if (confirm("Are you sure you want to logout?")) {
+            localStorage.removeItem("theme");
+            showNotification("Logged out successfully!", "success");
+            setTimeout(() => {
+                window.location.href = "login.html";
+            }, 1000);
         }
-        
-        // ========== SAMPLE DATA ==========
-        
-        function addSampleData() {
-            if (feedbacks.length === 0) {
-                const sampleData = [
-                    {
-                        id: 1,
-                        course: "secure-web-dev",
-                        courseName: "Secure Web Development",
-                        rating: 5,
-                        message: "Excellent course with practical security examples! The instructor was very knowledgeable.",
-                        difficulty: "medium",
-                        date: "Nov 25, 2024",
-                        student: "Lina Ali",
-                        timestamp: Date.now() - 86400000
-                    },
-                    {
-                        id: 2,
-                        course: "cyber-fundamentals",
-                        courseName: "Cyber Security Fundamental",
-                        rating: 4,
-                        message: "Great introduction to cybersecurity concepts. The labs were very helpful.",
-                        difficulty: "easy",
-                        date: "Nov 24, 2024",
-                        student: "Sarah Mohammed",
-                        timestamp: Date.now() - 172800000
-                    },
-                    {
-                        id: 3,
-                        course: "security-software",
-                        courseName: "Security Software Engineering",
-                        rating: 5,
-                        message: "Challenging but very rewarding course! Learned a lot about secure coding practices.",
-                        difficulty: "hard",
-                        date: "Nov 23, 2024",
-                        student: "Ahmed Ali",
-                        timestamp: Date.now() - 259200000
-                    },
-                    {
-                        id: 4,
-                        course: "secure-web-dev",
-                        courseName: "Secure Web Development",
-                        rating: 4,
-                        message: "Good coverage of web security topics. Would recommend for web developers.",
-                        difficulty: "medium",
-                        date: "Nov 22, 2024",
-                        student: "Omar Salman",
-                        timestamp: Date.now() - 345600000
-                    }
-                ];
-                
-                feedbacks = sampleData;
-            }
+    }
+
+    // ========== INITIALIZATION ==========
+
+    async function initializeApp() {
+        try {
+            // نثبت أن هذا أدمن في الواجهة فقط (التحقق الحقيقي على السيرفر)
+            sessionStorage.setItem("role", "admin");
+            sessionStorage.setItem("userName", "Admin");
+
+            initializeTheme();
+            initializeNotifications();
+
+            // نحمّل الفيدباكات من الباك إند
+            await loadFeedbackFromServer();
+
+            // Event listeners
+            document
+                .getElementById("themeToggler")
+                .addEventListener("click", toggleTheme);
+            document
+                .getElementById("feedbackForm")
+                .addEventListener("submit", addFeedback);
+            document
+                .getElementById("logoutBtn")
+                .addEventListener("click", logout);
+            document
+                .getElementById("notificationToggle")
+                .addEventListener("click", toggleNotifications);
+            document
+                .getElementById("filterCourse")
+                .addEventListener("change", filterFeedbacks);
+            document
+                .getElementById("sortFeedback")
+                .addEventListener("change", filterFeedbacks);
+            document
+                .getElementById("filterCategory")
+                .addEventListener("change", filterTable);
+            document
+                .getElementById("filterStatus")
+                .addEventListener("change", filterTable);
+            document
+                .getElementById("sortTable")
+                .addEventListener("change", filterTable);
+
+            // Update dashboard + table
+            updateDashboardStats();
+            filterFeedbacks();
+            updateCourseTable();
+
+            showNotification("Admin dashboard loaded", "success");
+        } catch (error) {
+            console.error("Error initializing app:", error);
         }
-        
-        // ========== INITIALIZATION ==========
-        
-        function initializeApp() {
-            try {
-                // Set admin role in session
-                sessionStorage.setItem('role', 'admin');
-                sessionStorage.setItem('userName', 'Admin');
-                
-                initializeTheme();
-                initializeNotifications();
-                addSampleData();
-                
-                // Add event listeners
-                document.getElementById('themeToggler').addEventListener('click', toggleTheme);
-                document.getElementById('feedbackForm').addEventListener('submit', addFeedback);
-                document.getElementById('logoutBtn').addEventListener('click', logout);
-                document.getElementById('notificationToggle').addEventListener('click', toggleNotifications);
-                document.getElementById('filterCourse').addEventListener('change', filterFeedbacks);
-                document.getElementById('sortFeedback').addEventListener('change', filterFeedbacks);
-                document.getElementById('filterCategory').addEventListener('change', filterTable);
-                document.getElementById('filterStatus').addEventListener('change', filterTable);
-                document.getElementById('sortTable').addEventListener('change', filterTable);
-                
-                // Update dashboard
-                updateDashboardStats();
-                filterFeedbacks();
-                updateCourseTable();
-                
-                showNotification("Admin dashboard loaded", "success");
-                
-            } catch (error) {
-                console.error("Error initializing app:", error);
-            }
-        }
-        
-        // Initialize the application when DOM is loaded
-        document.addEventListener('DOMContentLoaded', initializeApp);
-    </script>
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        initializeApp();
+    });
+</script>
+
 </body>
 </html>
