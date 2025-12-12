@@ -829,66 +829,86 @@
         }
         
         function addFeedback(event) {
-            event.preventDefault();
-            
-            try {
-                const studentName = currentStudentName;
-                const course = document.getElementById('course').value;
-                const rating = document.getElementById('rating').value;
-                const message = document.getElementById('message').value.trim();
-                const difficulty = document.getElementById('difficulty').value;
-                
-                if (!course || !rating || !message) {
-                    showNotification('Please fill all required fields!', "warning");
-                    return;
-                }
-                
-                if (!validateInput(message)) {
-                    showNotification('Invalid input detected. Please remove any script tags.', "error");
-                    return;
-                }
-                
-                const courseName = courseInfo[course].name;
-                const now = new Date();
-                const formattedDate = now.toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: '2-digit',
-                    year: 'numeric'
-                });
-                
-                const safeMessage = sanitizeInput(message);
-                
-                const newFeedback = {
-                    id: Date.now(),
-                    course: course,
-                    courseName: courseName,
-                    rating: parseInt(rating),
-                    message: safeMessage,
-                    difficulty: difficulty,
-                    date: formattedDate,
-                    student: studentName,
-                    timestamp: now.getTime()
-                };
-                
-                feedbacks.unshift(newFeedback);
-                
-                updateDashboardStats();
-                filterFeedbacks();
-                
-                document.getElementById('feedbackForm').reset();
-                document.getElementById('studentName').value = currentStudentName;
-                document.querySelectorAll('.star').forEach(star => {
-                    star.classList.remove('active');
-                });
-                
-                showNotification('Thank you for your feedback! ✓', "success");
-                
-            } catch (error) {
-                console.error("Error adding feedback:", error);
-                showNotification("Failed to submit feedback", "error");
-            }
+    event.preventDefault();
+
+    try {
+        const studentName = currentStudentName;
+        const course = document.getElementById('course').value;
+        const rating = document.getElementById('rating').value;
+        const message = document.getElementById('message').value.trim();
+        const difficulty = document.getElementById('difficulty').value;
+
+        if (!course || !rating || !message) {
+            showNotification('Please fill all required fields!', "warning");
+            return;
         }
-        
+
+        if (!validateInput(message)) {
+            showNotification('Invalid input detected. Please remove any script tags.', "error");
+            return;
+        }
+
+        const safeMessage = sanitizeInput(message);
+
+        // إرسال الفيدباك للباك إند
+        fetch('/feedback', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({
+                studentName,
+                course,
+                rating: parseInt(rating),
+                message,
+                difficulty
+            })
+        })
+        .then(res => {
+            if (!res.ok) throw new Error('Failed to save feedback');
+            return res.json();
+        })
+        .then(data => {
+            const now = new Date();
+            const formattedDate = now.toLocaleDateString('en-US', {
+                month: 'short',
+                day: '2-digit',
+                year: 'numeric'
+            });
+
+            const newFeedback = {
+                id: data.id,
+                course,
+                courseName: courseInfo[course].name,
+                rating: parseInt(rating),
+                message: safeMessage,
+                difficulty,
+                date: formattedDate,
+                student: studentName,
+                timestamp: now.getTime()
+            };
+
+            feedbacks.unshift(newFeedback);
+
+            updateDashboardStats();
+            filterFeedbacks();
+
+            document.getElementById('feedbackForm').reset();
+            document.getElementById('studentName').value = currentStudentName;
+            document.querySelectorAll('.star').forEach(star => star.classList.remove('active'));
+
+            showNotification('Thank you for your feedback! ✓ (saved to database)', "success");
+        })
+        .catch(error => {
+            console.error("Error adding feedback:", error);
+            showNotification("Failed to submit feedback", "error");
+        });
+
+    } catch (error) {
+        console.error("Unexpected error:", error);
+        showNotification("Unexpected error happened", "error");
+    }
+}
+
         function filterFeedbacks() {
             try {
                 const courseFilter = document.getElementById('filterCourse').value;
@@ -1071,8 +1091,6 @@
                 initializeTheme();
                 initializeNotifications();
                 
-                // لا نستدعي addSampleData() لأننا لا نريد بيانات نموذجية
-                
                 document.getElementById('studentName').value = currentStudentName;
                 document.getElementById('welcomeMsg').textContent = `Welcome, ${currentStudentName}`;
                 
@@ -1084,7 +1102,7 @@
                 document.getElementById('sortFeedback').addEventListener('change', filterFeedbacks);
                 
                 updateDashboardStats();
-                filterFeedbacks(); // ستظهر الرسالة الفارغة
+                filterFeedbacks();
                 
                 showNotification(`Welcome back, ${currentStudentName}!`, "success");
                 
