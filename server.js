@@ -269,55 +269,45 @@ app.get(
 );
 
 // ---------- Feedback API ----------
-app.post(
-  "/feedback",
-  requireLogin,
-  requireRole("student"),
-  (req, res, next) => {
+app.post("/feedback", async (req, res) => {
+  try {
     const { course, rating, message, difficulty, studentName } = req.body;
 
     if (!course || !rating || !message) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
-    // نجيب اسم الطالب من قاعدة البيانات (أأمن من الاعتماد على الـ body)
-    const getUserSql = "SELECT name FROM users WHERE id = ?";
-    req.db.get(getUserSql, [req.userId], (err, userRow) => {
-      if (err) {
-        console.error("Error fetching user name:", err);
-        return res.status(500).json({ error: "Database error" });
-      }
+    console.log("📥 New feedback body:", req.body);
 
-      const student_name = userRow && userRow.name
-        ? userRow.name
-        : studentName || "Student";
+    const insertSql = `
+      INSERT INTO feedback (
+        student_name,
+        course,
+        rating,
+        message,
+        difficulty
+      ) VALUES (?, ?, ?, ?, ?)
+    `;
 
-      const insertSql = `
-        INSERT INTO feedback (
-          student_name,
-          course,
-          rating,
-          message,
-          difficulty
-        ) VALUES (?, ?, ?, ?, ?)
-      `;
-
-      req.db.run(
-        insertSql,
-        [student_name, course, rating, message, difficulty || "medium"],
-        function (err2) {
-          if (err2) {
-            console.error("DB error inserting feedback:", err2);
-            return res.status(500).json({ error: "Database error" });
-          }
-
-          // نرجّع id للسطر الجديد
-          res.status(201).json({ id: this.lastID });
+    req.db.run(
+      insertSql,
+      [studentName || "Student", course, rating, message, difficulty || "medium"],
+      function (err) {
+        if (err) {
+          console.error("DB error inserting feedback:", err);
+          return res.status(500).json({ error: "Database error" });
         }
-      );
-    });
+
+        console.log("✅ Feedback inserted with id:", this.lastID);
+        res.status(201).json({ id: this.lastID });
+      }
+    );
+  } catch (err) {
+    console.error("🔥 Unexpected error in /feedback:", err);
+    res.status(500).json({ error: "Server error" });
   }
-);
+});
+
 
 // ---------- Static files ----------
 app.use(express.static(path.join(__dirname, "public")));
