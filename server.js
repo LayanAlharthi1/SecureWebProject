@@ -125,44 +125,42 @@ app.get(
 );
 
 // ---------- Feedback API ----------
-app.post("/feedback", async (req, res) => {
+app.post("/feedback", requireLogin, async (req, res) => {
   try {
-    const { course, rating, message, difficulty, studentName } = req.body;
+    const { course, rating, message, difficulty } = req.body;
 
     if (!course || !rating || !message) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
-    console.log("📥 New feedback body:", req.body);
-
-    const insertSql = `
-      INSERT INTO feedback (
-        student_name,
-        course,
-        rating,
-        message,
-        difficulty
-      ) VALUES (?, ?, ?, ?, ?)
-    `;
-
-    req.db.run(
-      insertSql,
-      [studentName || "Student", course, rating, message, difficulty || "medium"],
-      function (err) {
+    req.db.get(
+      "SELECT username FROM users WHERE id = ?",
+      [req.userId],
+      (err, row) => {
         if (err) {
-          console.error("DB error inserting feedback:", err);
           return res.status(500).json({ error: "Database error" });
         }
 
-        console.log("✅ Feedback inserted with id:", this.lastID);
-        res.status(201).json({ id: this.lastID });
+        const studentName = row?.username || "Student";
+
+        req.db.run(
+          `INSERT INTO feedback (student_name, course, rating, message, difficulty)
+           VALUES (?, ?, ?, ?, ?)`,
+          [studentName, course, rating, message, difficulty || "medium"],
+          function (err2) {
+            if (err2) {
+              return res.status(500).json({ error: "Database error" });
+            }
+            res.status(201).json({ id: this.lastID });
+          }
+        );
       }
     );
-  } catch (err) {
-    console.error("🔥 Unexpected error in /feedback:", err);
+  } catch {
     res.status(500).json({ error: "Server error" });
   }
 });
+
 
 // ---------- NEW: Get all feedback for admin ----------
 app.get("/feedback", requireLogin, requireRole("admin"), (req, res) => {
