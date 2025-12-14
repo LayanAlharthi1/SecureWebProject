@@ -1,0 +1,48 @@
+/* ============================================
+   ADMIN SPECIFIC STYLES
+   ============================================ */
+
+/* Show admin-only elements when admin is logged in */
+body.admin .admin-only {
+    display: block !important;
+}
+
+/* Admin specific card styles */
+.stat-card.admin-only {
+    border-left: 4px solid var(--clr-warning);
+}
+
+/* Admin feedback actions */
+.admin-feedback-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    justify-content: flex-end;
+}
+
+/* Admin table enhancements */
+.data-table.admin-enhanced th {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.data-table.admin-enhanced tr:hover {
+    background: rgba(102, 126, 234, 0.1);
+}
+
+/* Admin indicator styling */
+.indicator.admin {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(102, 126, 234, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(102, 126, 234, 0); }
+}
+
+/* Admin form styling */
+body.admin .feedback-form {
+    border: 2px solid rgba(102, 126, 234, 0.3);
+}

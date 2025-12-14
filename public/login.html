@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Log In - Secure Online Feedback</title>
+
+    <!-- use the CSS served from /css -->
+    <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+
+    <header class="main-header">
+        <div class="logo">cyber security course feedback</div>
+        <nav>
+            <ul class="nav">
+                <li><a href="home.html">Home</a></li>
+                <li><a href="team.html">Students</a></li>
+                <li><a href="courses.html">Courses</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <section class="auth-section">
+        <h1>Log In to Your Account</h1>
+
+        <!-- IMPORTANT: send POST to /login -->
+        <form id="login-form" action="/login" method="POST">
+            <label for="username">Username</label>
+            <input type="text" id="username" name="username" required
+                   minlength="3" maxlength="20"
+                   pattern="^[A-Za-z0-9_]+$"
+                   title="Username can only contain letters, numbers, and underscores."  />
+
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" required 
+                minlength="8"
+                maxlength="20"
+                pattern="^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$"
+                title="Password must be at least 8 characters,
+                include one uppercase letter,
+                one lowercase letter,
+                one number,
+                and one special character."/>
+
+            <button type="submit" class="btn secondary">Log In</button>
+        </form>
+
+        <p>Don't have an account? <a href="register.html">Register</a></p>
+    </section>
+
+     <script>
+    // *Sanitize input by removing HTML tags
+    function sanitizeInput(id) {
+        const input = document.getElementById(id);
+        input.value = input.value.replace(/<\/?[^>]+(>|$)/g, "").trim();
+        return cleanValue;
+    }
+
+    // Form validation
+    document.getElementById("login-form").addEventListener("submit", function(event) {
+        const username = sanitizeInput("username");
+        const password = sanitizeInput("password");
+
+        const passwordPattern = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$/;
+        const usernamePattern = /^[A-Za-z0-9_]{3,20}$/;
+
+        // Check required fields
+        if (!username || !password) {
+            alert("All fields are required.");
+            event.preventDefault();
+            return;
+        }
+
+        // Validate patterns
+        if (!usernamePattern.test(username)) {
+            alert("Username must be 3-20 characters and contain only letters, numbers, or underscores.");
+            event.preventDefault();
+            return;
+        }
+
+        // Validate password complexity
+        if (!passwordPattern.test(password)) {
+            alert("Password must be at least 8 characters, include uppercase, lowercase, number, and special character.");
+            event.preventDefault();
+            return;
+        }
+
+        
+    });
+    </script>
+
+    <script src="script.js"></script>
+</body>
+</html>
